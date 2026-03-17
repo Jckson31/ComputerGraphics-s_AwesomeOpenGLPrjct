@@ -1,0 +1,35 @@
+# --- Visual Studio ---
+.vs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.sln.view
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.db
+*.opendb
+
+# --- File di compilazione ---
+*.obj
+*.ilk
+*.pdb
+*.tlog
+*.lastbuildstate
+*.idb
+*.exe
+*.recipe
+*.log
+*.iobj
+*.ipdb
+
+# --- VS Code ---
+.vscode/
+
+# --- Librerie e Output ---
+# Ignoriamo i file generati ma NON le cartelle delle librerie originali
+*.lib
+*.dll
+*.app
