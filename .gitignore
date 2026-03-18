@@ -29,7 +29,7 @@ x86/
 .vscode/
 
 # --- Librerie e Output ---
-# Ignoriamo i file generati ma NON le cartelle delle librerie originali
-*.lib
-*.dll
+# Ignoriamo i file generati in OpenGLApp ma NON le cartelle delle librerie originali
+OpenGLApp/**/*.lib
+OpenGLApp/**/*.dll
 *.app
