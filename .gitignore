@@ -13,7 +13,7 @@ x86/
 *.opendb
 
 # --- File di compilazione ---
-*.obj
+OpenGLApp/**/*.obj
 *.ilk
 *.pdb
 *.tlog
