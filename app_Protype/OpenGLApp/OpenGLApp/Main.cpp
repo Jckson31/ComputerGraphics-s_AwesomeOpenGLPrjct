@@ -18,10 +18,13 @@
 #include "Player.h"
 #include "TavernObjects.h"
 #include "FoodStations.h"
-
+#include "Dirt.h"
+#include "Wizard.h"
 
 // --- FUNZIONE PER CARICARE LE TEXTURE ---
-unsigned int loadTexture(char const* path)
+unsigned int loadTexture(char const* path)  //percorso di un'immagine,
+//usa la libreria stb_image per decodificarla e 
+//la invia alla memoria della scheda video.
 {
     unsigned int textureID;
     glGenTextures(1, &textureID);
@@ -42,9 +45,10 @@ unsigned int loadTexture(char const* path)
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // NEAREST dà un bellissimo effetto Pixel Art!
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); //quando ingrandisci l'immagine, mantieni i pixel netti -> pixel art
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         stbi_image_free(data);
@@ -82,7 +86,7 @@ float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
 // player (oste)
-Player player(glm::vec2(400.0f, 350.0f)); 
+Player player(glm::vec2(400.0f, 350.0f));
 float playerSpeed = 300.0f;                      // Velocità di movimento in pixel al secondo
 
 // --- VARIABILI DI GIOCO ---
@@ -104,17 +108,12 @@ const int MAX_DIRT = 10;
 float randomDirtTimer = 0.0f;  // Timer per far comparire macchie a caso
 
 // --- STRUTTURA SPORCO ---
-struct Dirt {
-    glm::vec2 pos;
-    glm::vec2 size;
-};
-
 std::vector<Dirt> dirts; // Lista di tutte le macchie sul pavimento
 
 
 // postazione per ritirare il cibo
-TavernObject counter(glm::vec2(100.0f, 500.0f), glm::vec2(600.0f, 100.0f), glm::vec3(0.6f, 0.3f, 0.1f));
-
+TavernObject counter(glm::vec2(400.0f, 550.0f), glm::vec2(600.0f, 100.0f), glm::vec3(0.6f, 0.3f, 0.1f));
+// startPos (centro del bancone), startSize (larghezza e altezza), startColor (marrone)
 // lista tavoli
 std::vector<TavernObject> tables;
 
@@ -122,6 +121,8 @@ std::vector<TavernObject> tables;
 std::vector<FoodStation> foodStations;
 
 
+// --- FUNZIONE DI COLLISIONE AABB ---
+// Restituisce true se l'oggetto 1 (es. giocatore) si sovrappone all'oggetto 2 (es. tavolo)
 bool checkCollision(glm::vec2 pos1, glm::vec2 size1, glm::vec2 pos2, glm::vec2 size2)
 {
     // Calcoliamo la distanza tra i centri
@@ -138,8 +139,6 @@ bool checkCollision(glm::vec2 pos1, glm::vec2 size1, glm::vec2 pos2, glm::vec2 s
     // C'è collisione SOLO se si sovrappongono in ENTRAMBI gli assi
     return collisionX && collisionY;
 }
-
-
 
 
 std::vector<Customer> customers;
@@ -180,6 +179,9 @@ float goldBoostTimer = 0.0f;  // Quanto tempo manca alla fine dei guadagni doppi
 Bard bard(glm::vec2(40.0f, 40.0f)); // Creiamo il bardo con la sua grandezza
 float bardSpawnTimer = 0.0f; // Timer per farlo comparire
 
+Wizard wizard(glm::vec2(40.0f, 40.0f));
+
+
 int main()
 {
     // glfw: initialize and configure
@@ -204,7 +206,7 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    
+
 
 
     // glad: load all OpenGL function pointers
@@ -227,48 +229,48 @@ int main()
     // ------------------------------------------------------------------
     float cubeVertices[] = {
 
-         //coord. vertice     //coord. texture
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        //coord. vertice     //coord. texture
+       -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+       -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+       -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+       -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+       -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+       -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
 
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+       -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+       -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+       -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+       -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+       -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+       -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+       -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+       -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+       -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
 
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+       -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+       -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+       -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
 
     //vertici comande
@@ -379,13 +381,13 @@ int main()
     ourShader.setInt("texture1", 0);
     ourShader.setInt("texture2", 1);
 
-/*
-    // --- INIZIALIZZAZIONE ARREDAMENTO ---
-        // La cucina in alto (Bancone allungato per le future stazioni)
-    counter = glm::vec2(400.0f, 550.0f);
-    counter.size = glm::vec2(600.0f, 60.0f); // Larghezza portata a 600!
-    counter.color = glm::vec3(0.8f, 0.4f, 0.1f);
-*/
+    /*
+        // --- INIZIALIZZAZIONE ARREDAMENTO ---
+            // La cucina in alto (Bancone allungato per le future stazioni)
+        counter = glm::vec2(400.0f, 550.0f);
+        counter.size = glm::vec2(600.0f, 60.0f); // Larghezza portata a 600!
+        counter.color = glm::vec3(0.8f, 0.4f, 0.1f);
+    */
     // Svuotiamo la lista per sicurezza
     tables.clear();
 
@@ -408,13 +410,13 @@ int main()
 
     // Creiamo i tavoli assegnandogli la lista di sedie corretta
     // Tavoli a SINISTRA
-    tables.push_back(TavernObject(glm::vec2(150.0f, 400.0f), glm::vec2(120.0f, 60.0f), glm::vec3(0.4f, 0.2f, 0.1f), sideSeats ));
+    tables.push_back(TavernObject(glm::vec2(150.0f, 400.0f), glm::vec2(120.0f, 60.0f), glm::vec3(0.4f, 0.2f, 0.1f), sideSeats));
     tables.push_back(TavernObject(glm::vec2(150.0f, 100.0f), glm::vec2(120.0f, 60.0f), glm::vec3(0.4f, 0.2f, 0.1f), sideSeats));
     // Tavoli a DESTRA
-    tables.push_back(TavernObject(glm::vec2(650.0f, 400.0f), glm::vec2(120.0f, 60.0f), glm::vec3(0.4f, 0.2f, 0.1f), sideSeats ));
-    tables.push_back(TavernObject(glm::vec2(650.0f, 100.0f), glm::vec2(120.0f, 60.0f), glm::vec3(0.4f, 0.2f, 0.1f), sideSeats ));
+    tables.push_back(TavernObject(glm::vec2(650.0f, 400.0f), glm::vec2(120.0f, 60.0f), glm::vec3(0.4f, 0.2f, 0.1f), sideSeats));
+    tables.push_back(TavernObject(glm::vec2(650.0f, 100.0f), glm::vec2(120.0f, 60.0f), glm::vec3(0.4f, 0.2f, 0.1f), sideSeats));
     // Tavolo CENTRALE
-    tables.push_back(TavernObject(glm::vec2(400.0f, 250.0f), glm::vec2(160.0f, 80.0f), glm::vec3(0.4f, 0.2f, 0.1f), centerSeats ));
+    tables.push_back(TavernObject(glm::vec2(400.0f, 250.0f), glm::vec2(160.0f, 80.0f), glm::vec3(0.4f, 0.2f, 0.1f), centerSeats));
 
 
     // --- INIZIALIZZAZIONE STAZIONI ---
@@ -429,13 +431,14 @@ int main()
     foodStations.push_back(FoodStation(glm::vec2(650.0f, 550.0f), glm::vec2(40.0f, 40.0f), 3));
 
     unsigned int texFloor = loadTexture("resources/textures/wood.jpeg");
-    unsigned int texPlayer = loadTexture("resources/textures/player .png");
-    unsigned int texCustomer = loadTexture("resources/textures/awesomeface.png");
+    unsigned int texPlayer = loadTexture("resources/textures/awesomeface.png");
 
     unsigned int texBeer = loadTexture("resources/textures/beer.png");
     unsigned int texMeat = loadTexture("resources/textures/meat.png");
     unsigned int texBread = loadTexture("resources/textures/bread.png");
     unsigned int texSoup = loadTexture("resources/textures/soup.png");
+
+    unsigned int texCustomer = loadTexture("resources/textures/awesomeface.png");
 
     unsigned int foodTextures[4];
     foodTextures[0] = texBeer;   // 0 = Birra
@@ -445,6 +448,10 @@ int main()
 
     ourShader.use();
     ourShader.setInt("texture1", 0);
+
+    //unsigned int texPlayer = loadTexture("resources/textures/player.png");
+    unsigned int texBigTable = loadTexture("resources/textures/BigTable.png");
+
 
 
     // render loop
@@ -473,32 +480,31 @@ int main()
             float randomX = 50.0f + (rand() % 700);
             float randomY = 50.0f + (rand() % 400);
 
-            Dirt randomDirt;
-            randomDirt.pos = glm::vec2(randomX, randomY);
-            randomDirt.size = glm::vec2(35.0f, 35.0f);
-            dirts.push_back(randomDirt);
+            dirts.push_back(Dirt(glm::vec2(randomX, randomY)));
 
             std::cout << "E' apparsa una macchia sul pavimento..." << std::endl;
             checkTavernDirt(); // Aggiorna la barra e controlla il Game Over
         }
 
         // --- AGGIORNAMENTO TIMER DEI BONUS ---
-        player.update(deltaTime);
+        // --- AGGIORNAMENTO DEL GIOCATORE ---
+        player.update(deltaTime); // Il giocatore gestisce da solo il suo scatto!
 
-        if (goldBoostTimer > 0.0f) goldBoostTimer -= deltaTime;
-
-        // --- AGGIORNAMENTO TIMER E BARDO ---
-        if (speedBoostTimer > 0.0f) speedBoostTimer -= deltaTime;
-
+        // --- AGGIORNAMENTO TIMER BARDO ---
         if (goldBoostTimer > 0.0f) {
             goldBoostTimer -= deltaTime;
             if (goldBoostTimer <= 0.0f) {
                 bard.stopPlaying(); // Diciamo al bardo di smettere!
+                std::cout << "Il bardo ha TERMINATO l'esibizione e se ne va." << std::endl;
             }
         }
 
         // Il Bardo pensa e si muove tutto da solo!
-        bard.update(deltaTime);
+        bard.update(deltaTime, wizard.isVisible());
+        wizard.update(deltaTime, bard.isVisible());
+
+
+
 
 
         // --- LOGICA SPAWN CLIENTI ---
@@ -531,9 +537,8 @@ int main()
                 int randomIndex = rand() % freeSeats.size();
                 FreeSeat chosen = freeSeats[randomIndex];
 
-                // Sostituisci tutte le vecchie assegnazioni (newCust.pos = ..., ecc) con questa riga:
                 glm::vec2 startPos(400.0f, -20.0f);
-                glm::vec2 target = tables[chosen.tId].getPos() + tables[chosen.tId].getSeatPos(chosen.sId);
+                glm::vec2 target = tables[chosen.tId].getSeatPos(chosen.sId);
                 int randomFood = rand() % 4;
 
                 // Creiamo l'oggetto usando il Costruttore!
@@ -557,10 +562,7 @@ int main()
                 score -= 5;
 
                 if (rand() % 100 < 40) {
-                    Dirt newDirt;
-                    newDirt.pos = customers[i].getPos(); // USIAMO IL GETTER!
-                    newDirt.size = glm::vec2(35.0f, 35.0f);
-                    dirts.push_back(newDirt);
+                    dirts.push_back(Dirt(customers[i].getPos()));
                     checkTavernDirt();
                 }
                 customers.erase(customers.begin() + i);
@@ -590,49 +592,49 @@ int main()
         ourShader.setMat4("projection", projection);
 
         // camera/view transformation
-		glm::mat4 view = glm::mat4(1.0f);   // matrice identità, la telecamera è fissa e guarda lungo -Z, quindi non serve trasformare nulla
+        glm::mat4 view = glm::mat4(1.0f);   // matrice identità, la telecamera è fissa e guarda lungo -Z, quindi non serve trasformare nulla
         ourShader.setMat4("view", view);
 
 
-       /*
-        //render BANCO and ASSE
-        glBindVertexArray(cubeVAO);
+        /*
+         //render BANCO and ASSE
+         glBindVertexArray(cubeVAO);
 
-        glm::mat4 model;
+         glm::mat4 model;
 
-        ourShader.setBool("useSecondTexture", true);
+         ourShader.setBool("useSecondTexture", true);
 
-        // ===== BANCO =====
-        glm::vec3 bancoPos = glm::vec3(400.0f, 300.0f, 0.0f); // Al centro dello schermo (800/2, 600/2)
-        glm::vec3 bancoScale = glm::vec3(200.0f, 50.0f, 1.0f); // Largo 200 pixel, alto 50
+         // ===== BANCO =====
+         glm::vec3 bancoPos = glm::vec3(400.0f, 300.0f, 0.0f); // Al centro dello schermo (800/2, 600/2)
+         glm::vec3 bancoScale = glm::vec3(200.0f, 50.0f, 1.0f); // Largo 200 pixel, alto 50
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, bancoPos);
-        model = glm::scale(model, bancoScale);
-        ourShader.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+         model = glm::mat4(1.0f);
+         model = glm::translate(model, bancoPos);
+         model = glm::scale(model, bancoScale);
+         ourShader.setMat4("model", model);
+         glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
-        // ===== ASSE =====
-        glm::vec3 assePos = glm::vec3(0.0f, 0.0f, -0.2f);
-        glm::vec3 asseScale = glm::vec3(3.0f, 0.1f, 0.2f);
+         // ===== ASSE =====
+         glm::vec3 assePos = glm::vec3(0.0f, 0.0f, -0.2f);
+         glm::vec3 asseScale = glm::vec3(3.0f, 0.1f, 0.2f);
 
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, assePos);
-        model = glm::scale(model, asseScale);
-        ourShader.setMat4("model", model);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+         model = glm::mat4(1.0f);
+         model = glm::translate(model, assePos);
+         model = glm::scale(model, asseScale);
+         ourShader.setMat4("model", model);
+         glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        // metà dimensioni dell'asse
-        float asseHalfHeight = asseScale.y * 0.5f; // 0.05
-        float asseHalfDepth = asseScale.z * 0.5f; // 0.1
+         // metà dimensioni dell'asse
+         float asseHalfHeight = asseScale.y * 0.5f; // 0.05
+         float asseHalfDepth = asseScale.z * 0.5f; // 0.1
 
-        // piano superiore e bordo frontale
-        float asseTopY = assePos.y + asseHalfHeight;
-        float asseFrontZ = assePos.z + asseHalfDepth;
-        */
+         // piano superiore e bordo frontale
+         float asseTopY = assePos.y + asseHalfHeight;
+         float asseFrontZ = assePos.z + asseHalfDepth;
+         */
 
-        
+
         ourShader.use();
         glBindVertexArray(cubeVAO);
 
@@ -699,7 +701,7 @@ int main()
             ourShader.setMat4("model", modelStation);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-            
+
         // ===== DISEGNA LO SPORCO =====
         for (int i = 0; i < dirts.size(); i++) {
             // Colore verdastro/marrone scuro per lo sporco
@@ -707,14 +709,14 @@ int main()
             glm::mat4 modelDirt = glm::mat4(1.0f);
 
             // Lo mettiamo a Z=0.05f (sotto i tavoli ma sopra il pavimento)
-            modelDirt = glm::translate(modelDirt, glm::vec3(dirts[i].pos.x, dirts[i].pos.y, 0.05f));
-            modelDirt = glm::scale(modelDirt, glm::vec3(dirts[i].size.x, dirts[i].size.y, 1.0f));
+            modelDirt = glm::translate(modelDirt, glm::vec3(dirts[i].getPos().x, dirts[i].getPos().y, 0.05f));
+            modelDirt = glm::scale(modelDirt, glm::vec3(dirts[i].getSize().x, dirts[i].getSize().y, 1.0f));
             ourShader.setMat4("model", modelDirt);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
         // ===== DISEGNA IL BARDO =====
-        if (bard.isVisible()) { 
+        if (bard.isVisible()) {
 
             if (bard.isPlaying()) {
                 ourShader.setVec3("noteColor", glm::vec3(0.9f, 0.4f, 0.8f));
@@ -727,6 +729,18 @@ int main()
             modelBard = glm::translate(modelBard, glm::vec3(bard.getPos().x, bard.getPos().y, 0.12f));
             modelBard = glm::scale(modelBard, glm::vec3(bard.getSize().x, bard.getSize().y, 1.0f));
             ourShader.setMat4("model", modelBard);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        // ===== DISEGNA IL MAGO =====
+        if (wizard.isVisible()) {
+            // Diamo al mago un colore Azzurro brillante/magico
+            ourShader.setVec3("noteColor", glm::vec3(0.2f, 0.7f, 1.0f));
+
+            glm::mat4 modelWizard = glm::mat4(1.0f);
+            modelWizard = glm::translate(modelWizard, glm::vec3(wizard.getPos().x, wizard.getPos().y, 0.12f));
+            modelWizard = glm::scale(modelWizard, glm::vec3(wizard.getSize().x, wizard.getSize().y, 1.0f));
+            ourShader.setMat4("model", modelWizard);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
@@ -751,9 +765,30 @@ int main()
                     custColor = glm::vec3(0.8f, 0.1f, 0.1f);
                 }
             }
+
+            ourShader.setVec3("noteColor", custColor);
+            glm::mat4 modelCust = glm::mat4(1.0f);
+            modelCust = glm::translate(modelCust, glm::vec3(custPos.x, custPos.y, 0.11f)); // Z = 0.11, sopra i tavoli
+            modelCust = glm::scale(modelCust, glm::vec3(40.0f, 40.0f, 1.0f));
+            ourShader.setMat4("model", modelCust);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+
+            if (!customers[i].getIsWalking()) { // Mostra il cibo solo se è seduto!
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, foodTextures[customers[i].desiredFood]);
+
+                ourShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f)); // Colore normale
+                glm::mat4 modelOrder = glm::mat4(1.0f);
+
+                // Lo posizioniamo 35 pixel SOPRA la testa del cliente
+                modelOrder = glm::translate(modelOrder, glm::vec3(custPos.x, custPos.y + 35.0f, 0.12f));
+                modelOrder = glm::scale(modelOrder, glm::vec3(25.0f, 25.0f, 1.0f));
+                ourShader.setMat4("model", modelOrder);
+                glDrawArrays(GL_TRIANGLES, 0, 36);
+            }
         }
 
-        
+
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
@@ -813,7 +848,7 @@ void checkTavernDirt() {
         std::cout << " Punteggio Finale: " << score << " Monete" << std::endl;
         std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 
-        // In un gioco completo qui metteremmo in pausa il gioco. 
+        // In un gioco completo qui metteremmo in pausa il gioco.
         // Per ora azzeriamo i guadagni e la reputazione per farti capire che hai perso!
         score = 0;
         dirts.clear(); // Magicamente pulito, ma a che prezzo!
@@ -829,8 +864,56 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    // Il player gestisce il suo movimento e le collisioni coi muri/cucina da solo
-    player.processMovement(window, deltaTime, counter.getPos().y);
+    // 1. Chiediamo al giocatore di calcolare il movimento (e aggiornare le sue animazioni)
+    glm::vec2 moveDir = player.calculateMovement(window, deltaTime);
+
+    // Salviamo posizione e dimensioni attuali per comodità
+    glm::vec2 playerPos = player.getPos();
+    glm::vec2 playerSize = player.getSize();
+
+    // 2. Creiamo le due posizioni future per gli assi separati
+    glm::vec2 nextPosX = playerPos;
+    nextPosX.x += moveDir.x;
+
+    glm::vec2 nextPosY = playerPos;
+    nextPosY.y += moveDir.y;
+
+    // --- CONTROLLO LIMITI SCHERMO ---
+    float halfWidth = playerSize.x / 2.0f;
+    float halfHeight = playerSize.y / 2.0f;
+
+    if (nextPosX.x - halfWidth < 0.0f) nextPosX.x = halfWidth;
+    if (nextPosX.x + halfWidth > SCR_WIDTH) nextPosX.x = SCR_WIDTH - halfWidth;
+    if (nextPosY.y - halfHeight < 0.0f) nextPosY.y = halfHeight;
+    if (nextPosY.y + halfHeight > SCR_HEIGHT) nextPosY.y = SCR_HEIGHT - halfHeight;
+
+    // --- CONTROLLO COLLISIONI ASSE X ---
+    bool colX = false;
+    // Controllo contro il bancone (counter)
+    if (checkCollision(nextPosX, playerSize, counter.getPos(), counter.getSize())) colX = true;
+
+    // Controllo contro i tavoli
+    for (int i = 0; i < tables.size(); i++) {
+        if (checkCollision(nextPosX, playerSize, tables[i].getPos(), tables[i].getSize())) colX = true;
+    }
+    // Se è libero, aggiorniamo la X reale
+    if (!colX) playerPos.x = nextPosX.x;
+
+    // --- CONTROLLO COLLISIONI ASSE Y ---
+    bool colY = false;
+    // Controllo contro il bancone (counter)
+    if (checkCollision(nextPosY, playerSize, counter.getPos(), counter.getSize())) colY = true;
+
+    // Controllo contro i tavoli
+    for (int i = 0; i < tables.size(); i++) {
+        if (checkCollision(nextPosY, playerSize, tables[i].getPos(), tables[i].getSize())) colY = true;
+    }
+    // Se è libero, aggiorniamo la Y reale
+    if (!colY) playerPos.y = nextPosY.y;
+
+    // 3. COMUNICHIAMO AL GIOCATORE LA POSIZIONE FINALE SICURA
+    player.setPos(playerPos);
+
 
 
     // --- INTERAZIONE CON SPAZIO ---
@@ -840,53 +923,75 @@ void processInput(GLFWwindow* window)
 
     // Controlliamo che il tasto sia stato appena premuto e non tenuto premuto
     if (spaceIsPressed && !spacebarPressed) {
+        bool interactedWithNPC = false;
 
-        bool interactedWithBard = false;
-
-        // PRIORITÀ ASSOLUTA: Controlliamo se stiamo chiedendo al Bardo di suonare
+        // PRIORITÀ 1: Il Bardo
         if (bard.tryInteract(player.getPos())) {
-            goldBoostTimer = 15.0f; // 15 secondi di bonus!
-            interactedWithBard = true;
-            std::cout << "\n💰 BONUS ATTIVO! Il Bardo suona e i clienti pagheranno il DOPPIO! 💰\n" << std::endl;
+            goldBoostTimer = 15.0f;
+            interactedWithNPC = true;
+            std::cout << "\n💰 BONUS ATTIVO! Il Bardo suona! 💰\n" << std::endl;
+        }
+
+        // PRIORITÀ 2: Il Mago
+        if (!interactedWithNPC && wizard.tryInteract(player.getPos())) {
+            interactedWithNPC = true;
+            std::cout << "\n🔮 MAGO: 'Per 15 monete d'oro, faro' sparire ogni macchia! Accetti?' 🔮" << std::endl;
+            std::cout << ">>> Premi [Y] per pagare, [N] per rifiutare. <<<\n" << std::endl;
         }
 
 
-        // Se NON abbiamo interagito col bardo, facciamo le normali azioni del cibo
-        if (!interactedWithBard) {
+        // Se non abbiamo parlato con nessuno, raccogliamo/consegniamo il cibo
+        if (!interactedWithNPC) {
 
 
             // CASO 1: MANI VUOTE -> Proviamo a raccogliere il cibo
-            if (heldItem == -1) {
+            if (player.getHeldItem() == -1) {
                 for (int i = 0; i < foodStations.size(); i++) {
                     float distanza = glm::distance(player.getPos(), foodStations[i].getPos());
-                    if (distanza < 80.0f) {
-                        heldItem = i;
+                    // DISTANZA AUMENTATA A 120 per compensare il bancone!
+                    if (distanza < 120.0f) {
+                        player.setHeldItem(i);
                         std::cout << "Raccolto piatto: " << i << std::endl;
                         break;
                     }
                 }
             }
-
             // CASO 2: ABBIAMO CIBO IN MANO -> Proviamo a consegnarlo
             else {
                 bool delivered = false;
                 for (int i = 0; i < customers.size(); i++) {
                     int tId = customers[i].table;
                     int sId = customers[i].seat;
-                    glm::vec2 custPos = tables[tId].getPos() + tables[tId].getSeatPos(sId);
+
+                    // CORREZIONE: Usa solo getSeatPos() perché contiene già la posizione assoluta!
+                    glm::vec2 custPos = tables[tId].getSeatPos(sId);
 
                     float distanza = glm::distance(player.getPos(), custPos);
 
-                    // Se siamo vicini a un cliente, lui sta aspettando, e il cibo è quello giusto!
-                    if (distanza < 100.0f && customers[i].waiting && customers[i].desiredFood == heldItem) {
-                        // --- CALCOLO GUADAGNO (CON BONUS BARDO) ---
-                        int baseReward = 10;
-                        if (goldBoostTimer > 0.0f) {
-                            baseReward = 20; // IL DOPPIO SE IL BONUS È ATTIVO!
-                        }
+                    if (distanza < 120.0f && customers[i].waiting && customers[i].desiredFood == player.getHeldItem()) {
 
+                        // --- CALCOLO GUADAGNO ---
+                        int baseReward = (goldBoostTimer > 0.0f) ? 20 : 10;
+
+
+                        float pazienza = customers[i].getPatience();
+
+                        // MALUS PER L'ATTESA
+                        if (pazienza <= 10.0f) {
+                            // Cliente ROSSO: è furioso, paga la metà (-50%)
+                            baseReward = baseReward / 2;
+                        }
+                        else if (pazienza <= 20.0f) {
+                            // Cliente ARANCIONE: è scocciato, paga il 25% in meno
+                            baseReward = (int)(baseReward * 0.75f);
+                        }
+                        // Se è > 20.0f (BLU) è felice e paga il 100%, quindi non facciamo nulla!
+
+                        // MALUS PER LO SPORCO
                         int dirtPenalty = dirts.size();
                         int finalReward = baseReward - dirtPenalty;
+
+                        // Assicuriamoci che paghi almeno 1 moneta
                         if (finalReward < 1) finalReward = 1;
 
                         score += finalReward;
@@ -896,63 +1001,41 @@ void processInput(GLFWwindow* window)
                         if (goldBoostTimer > 0.0f) std::cout << " (Bonus Bardo x2!)";
                         std::cout << " | Incasso Totale: " << score << std::endl;
 
-                        // --- ATTIVAZIONE BONUS VELOCITÀ (Ogni 6 piatti) ---
+                        // --- ATTIVAZIONE BONUS VELOCITÀ ---
                         if (customersServed > 0 && customersServed % 6 == 0) {
-                            speedBoostTimer = 6.0f; // 6 secondi di super velocità!
-                            std::cout << "\n⚡ COMBO! Hai servito 6 piatti! SEI VELOCISSIMO PER 6 SECONDI! ⚡\n" << std::endl;
+                            player.activateSpeedBoost(6.0f); // Usa la funzione del giocatore!
+                            std::cout << "\n⚡ COMBO! Hai servito 6 piatti! VELOCITA' AUMENTATA! ⚡\n" << std::endl;
                         }
 
-
-                        // Il cliente pagherà sempre almeno 1 moneta (non mangia gratis!)
-                        if (finalReward < 1) finalReward = 1;
-
-                        score += finalReward;
-                        customersServed++;
-
-                        std::cout << "Ordine Consegnato! Hai ricevuto +" << finalReward << " Monete. (Malus sporco: -" << dirtPenalty << ")" << std::endl;
-                        std::cout << "Incasso Totale: " << score << " | Piatti totali: " << customersServed << std::endl;
-
                         // --- LOGICA LEVEL UP ---
-                        // Controlliamo se i piatti totali sono un multiplo di 5
                         if (customersServed > 0 && customersServed % 5 == 0) {
                             currentLevel++;
                             std::cout << "\n====================================" << std::endl;
-                            std::cout << "*** LEVEL UP! BENVENUTO AL LIVELLO " << currentLevel << " ***" << std::endl;
-
-                            // Aumentiamo la difficoltà scalandola gradualmente
-                            if (currentSpawnRate > 2.0f) currentSpawnRate -= 2.0f; // I clienti arrivano più in fretta
-                            if (currentMaxPatience > 15.0f) currentMaxPatience -= 5.0f; // Perdono la pazienza prima
-
-                            //std::cout << "Difficolta' aumentata! I clienti arrivano ogni " << currentSpawnRate << " secondi." << std::endl;
-                           // std::cout << "====================================\n" << std::endl;
+                            std::cout << "*** LEVEL UP! LIVELLO " << currentLevel << " ***" << std::endl;
+                            if (currentSpawnRate > 2.0f) currentSpawnRate -= 2.0f;
+                            if (currentMaxPatience > 15.0f) currentMaxPatience -= 5.0f;
                         }
 
-                        // --- SPAWN SPORCO (40% di probabilità) ---
+                        // --- SPAWN SPORCO ---
                         if (rand() % 100 < 40) {
-                            Dirt newDirt;
-                            // Mettiamo la macchia esattamente dove era seduto il cliente
-                            newDirt.pos = custPos;
-                            newDirt.size = glm::vec2(35.0f, 35.0f);
-                            dirts.push_back(newDirt);
-                            std::cout << "Il cliente ha lasciato cadere del cibo a terra!" << std::endl;
+                            dirts.push_back(Dirt(custPos));
                             checkTavernDirt();
                         }
 
-
-                        heldItem = -1; // Svuotiamo le mani
-                        customers.erase(customers.begin() + i); // Il cliente se ne va felice
+                        player.setHeldItem(-1); // Svuotiamo le mani tramite il Setter!
+                        customers.erase(customers.begin() + i); // Il cliente se ne va
                         delivered = true;
-                        break; // Usciamo dal ciclo
+                        break;
                     }
                 }
-
-                //    // CASO 3: Buttare il cibo (Se premiamo Spazio lontano dai clienti)
-                //    if (!delivered) {
-                //        std::cout << "Piatto buttato!" << std::endl;
-                //        heldItem = -1; // Svuota le mani
-                //    }
-
             }
+
+            //    // CASO 3: Buttare il cibo (Se premiamo Spazio lontano dai clienti)
+            //    if (!delivered) {
+            //        std::cout << "Piatto buttato!" << std::endl;
+            //        heldItem = -1; // Svuota le mani
+            //    }
+
         }
     }
     // Aggiorniamo lo stato del tasto per il prossimo frame
@@ -960,9 +1043,9 @@ void processInput(GLFWwindow* window)
 
     // Buttare il cibo
     if (cIsPressed && !cWasPressed) {
-        if (heldItem != -1) {
+        if (player.getHeldItem() != -1) {
             std::cout << "Piatto buttato via!" << std::endl;
-            heldItem = -1; // Svuota le mani
+            player.setHeldItem(-1); // Svuota le mani
         }
     }
     cWasPressed = cIsPressed;
@@ -974,7 +1057,7 @@ void processInput(GLFWwindow* window)
 
         for (int i = 0; i < dirts.size(); i++) {
             // Se siamo vicini a una macchia, la puliamo
-            if (glm::distance(player.getPos(), dirts[i].pos) < 60.0f) {
+            if (glm::distance(player.getPos(), dirts[i].getPos()) < 60.0f) {
                 dirts.erase(dirts.begin() + i);
                 std::cout << "Hai spazzato via una macchia!" << std::endl;
                 checkTavernDirt(); // Aggiorna la barra in console
@@ -988,6 +1071,28 @@ void processInput(GLFWwindow* window)
         }
     }
     eWasPressed = eIsPressed;
+
+    if (wizard.isWaitingForAnswer()) {
+
+        if (glfwGetKey(window, GLFW_KEY_Y) == GLFW_PRESS) {
+            // Costa 15 monete, controlliamo se siamo abbastanza ricchi!
+            if (score >= 15) {
+                score -= 15;
+                dirts.clear(); // MAGIA! 
+                wizard.answerPrompt(true);
+                std::cout << "Monete rimanenti: " << score << std::endl;
+                checkTavernDirt(); // Stampa la barra pulita in console
+            }
+            else {
+                std::cout << "Non hai 15 monete! Il mago ti guarda male e se ne va." << std::endl;
+                wizard.answerPrompt(false);
+            }
+        }
+        else if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS) {
+            std::cout << "Hai rifiutato l'offerta." << std::endl;
+            wizard.answerPrompt(false);
+        }
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

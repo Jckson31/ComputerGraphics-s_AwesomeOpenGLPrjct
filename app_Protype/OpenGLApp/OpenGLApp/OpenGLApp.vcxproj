@@ -141,26 +141,29 @@
   <ItemGroup>
     <ClCompile Include="Bard.cpp" />
     <ClCompile Include="Customer.cpp" />
+    <ClCompile Include="Dirt.cpp" />
     <ClCompile Include="FoodStations.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="TavernObjects.cpp" />
+    <ClCompile Include="Wizard.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bard.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="Customer.h" />
+    <ClInclude Include="Dirt.h" />
     <ClInclude Include="FoodStations.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="shader_s.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="TavernObjects.h" />
+    <ClInclude Include="Wizard.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="OpenGLApp.aps" />
     <None Include="shader.fs" />
     <None Include="shader.vs" />
     <None Include="shader_light.fs" />

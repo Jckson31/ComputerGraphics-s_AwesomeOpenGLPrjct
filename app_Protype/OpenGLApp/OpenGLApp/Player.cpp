@@ -23,47 +23,43 @@ void Player::update(float deltaTime) {
     }
 }
 
-// Spostiamo qui la logica di movimento che prima era nel Main
-void Player::processMovement(GLFWwindow* window, float deltaTime, float kitchenBoundaryY) {
+glm::vec2 Player::calculateMovement(GLFWwindow* window, float deltaTime) {
     float currentSpeed = baseSpeed;
 
-    // Se c'è il bonus attivo, va il 50% più veloce!
+    // Applica il power-up se attivo
     if (speedBoostTimer > 0.0f) {
         currentSpeed = baseSpeed * 1.5f;
     }
     float velocity = currentSpeed * deltaTime;
 
-    // Movimento WASD
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) pos.y += velocity;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) pos.y -= velocity;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) pos.x -= velocity;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) pos.x += velocity;
+    // Vettore che conterrà il nostro "desiderio" di movimento
+    glm::vec2 move(0.0f, 0.0f);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) move.y += velocity;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) move.y -= velocity;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) move.x -= velocity;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) move.x += velocity;
+
+    isMoving = (move.x != 0.0f || move.y != 0.0f);
 
     // --- LOGICA ANIMAZIONE ---
     if (isMoving) {
         animTimer += deltaTime;
-        if (animTimer > 0.12f) { // Cambia fotogramma ogni 0.12 secondi
+        if (animTimer > 0.12f) {
             currentFrame++;
-            if (currentFrame > 3) currentFrame = 0; // Se arriva al 4° frame, torna al 1° (0,1,2,3)
+            if (currentFrame > 3) currentFrame = 0;
             animTimer = 0.0f;
         }
     }
     else {
-        // Se sta fermo, usa il frame "0" (quello dritto in piedi) e azzera il timer
         currentFrame = 0;
         animTimer = 0.0f;
     }
 
-    // Limiti dei Muri (Non farlo uscire dallo schermo)
-    if (pos.x < 0.0f) pos.x = 0.0f;
-    if (pos.x > 800.0f - size.x) pos.x = 800.0f - size.x;
-    if (pos.y < 0.0f) pos.y = 0.0f;
-    if (pos.y > 600.0f - size.y) pos.y = 600.0f - size.y;
-
-    // Limite della Cucina (Il bancone in alto).
-    // Impedisce di camminare sopra la cucina.
-    if (pos.y > kitchenBoundaryY - size.y) pos.y = kitchenBoundaryY - size.y;
+    // Restituiamo lo spostamento al Main!
+    return move;
 }
+
 
 // --- FUNZIONI GETTER E SETTER ---
 glm::vec2 Player::getPos() const { return pos; }
@@ -79,3 +75,7 @@ void Player::setHeldItem(int item) { heldItem = item; }
 void Player::addScore(int amount) { score += amount; }
 void Player::addCustomerServed() { customersServed++; }
 void Player::activateSpeedBoost(float duration) { speedBoostTimer = duration; }
+
+void Player::setPos(glm::vec2 newPos) {
+    pos = newPos;
+}

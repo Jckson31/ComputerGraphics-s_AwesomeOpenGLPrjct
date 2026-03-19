@@ -18,7 +18,7 @@ public:
     Bard(glm::vec2 startSize);
 
     // Funzione principale che gestisce tutti i suoi movimenti e timer
-    void update(float deltaTime);
+    void update(float deltaTime, bool isTavernBusy);
 
     // Funzione che il Main chiama quando premi SPAZIO per interagire
     bool tryInteract(glm::vec2 playerPos);
@@ -32,4 +32,5 @@ public:
     bool isVisible() const; // Ci dice se dobbiamo disegnarlo o no
     bool isPlaying() const;
 };
+
 
