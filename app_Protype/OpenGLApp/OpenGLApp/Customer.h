@@ -21,7 +21,7 @@ public:
     Customer(int tIdx, int sIdx, glm::vec2 startPos, glm::vec2 target, int food, float startPatience);
 
     // Funzione principale
-    void update(float deltaTime);
+    void update(float deltaTime, bool isBardPlaying);
 
     // Funzioni per leggere i dati privati dal Main
     glm::vec2 getPos() const;

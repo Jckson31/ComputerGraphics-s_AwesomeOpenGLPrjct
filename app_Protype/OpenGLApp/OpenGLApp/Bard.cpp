@@ -3,6 +3,7 @@
 #include <iostream>
 
 Bard::Bard(glm::vec2 startSize) {
+
     size = startSize;
     pos = glm::vec2(400.0f, -20.0f); // fuo ri dallo schermo
 
@@ -13,6 +14,9 @@ Bard::Bard(glm::vec2 startSize) {
 
     timeToLeave = 0.0f;
     spawnTimer = 0.0f;
+
+    currentFrame = 0;
+    animTimer = 0.0f;
 }
 
 void Bard::update(float deltaTime, bool isTavernBusy) {
@@ -66,6 +70,20 @@ void Bard::update(float deltaTime, bool isTavernBusy) {
             }
         }
     }
+
+    // --- LOGICA ANIMAZIONE BARDO ---
+    if (walkingIn || walkingOut || playing) {
+        animTimer += deltaTime;
+        if (animTimer > 0.15f) { // Velocità animazione
+            currentFrame++;
+            if (currentFrame > 1) currentFrame = 0; // I frame sono solo 0 e 1!
+            animTimer = 0.0f;
+        }
+    }
+    else {
+        currentFrame = 0;
+        animTimer = 0.0f;
+    }
 }
 
 // Quando viene premuto SPAZIO, chiama questa funzione
@@ -86,7 +104,15 @@ void Bard::stopPlaying() {
     std::cout << "Il bardo ha terminato l'esibizione e se ne va." << std::endl;
 }
 
+int Bard::getCurrentFrame() const { return currentFrame; }
+
+int Bard::getActionState() const {
+    if (playing) return 2;       // Stato 2: Suona
+    if (walkingIn) return 1;     // Stato 1: Cammina in su
+    return 0;                    // Stato 0: Cammina in giu (o è fermo)
+}
+
 glm::vec2 Bard::getPos() const { return pos; }
 glm::vec2 Bard::getSize() const { return size; }
 bool Bard::isPlaying() const { return playing; }
-bool Bard::isVisible() const { return (active || playing || walkingIn || walkingOut); }  //il bardo sta facendo qualcosa, quindi va disegnato
+bool Bard::isVisible() const { return (active || playing || walkingIn || walkingOut); }  //il bardo sta facendo qua

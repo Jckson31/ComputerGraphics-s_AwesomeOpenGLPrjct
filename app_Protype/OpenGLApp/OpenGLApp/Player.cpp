@@ -2,7 +2,7 @@
 
 Player::Player(glm::vec2 startPos) {
     pos = startPos;
-    size = glm::vec2(40.0f, 40.0f);
+    size = glm::vec2(40.0f, 60.0f);
     baseSpeed = 250.0f; // La velocità standard dell'oste
 
     heldItem = -1;
@@ -35,19 +35,21 @@ glm::vec2 Player::calculateMovement(GLFWwindow* window, float deltaTime) {
     // Vettore che conterrà il nostro "desiderio" di movimento
     glm::vec2 move(0.0f, 0.0f);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) move.y += velocity;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) move.y -= velocity;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) move.x -= velocity;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) move.x += velocity;
+    // Registriamo sia il movimento che la DIREZIONE (0=Giù, 1=Su, 2=Sinistra, 3=Destra)
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) { move.y += velocity; currentDir = 1; }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) { move.y -= velocity; currentDir = 0; }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) { move.x -= velocity; currentDir = 2; }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) { move.x += velocity; currentDir = 3; }
 
     isMoving = (move.x != 0.0f || move.y != 0.0f);
 
     // --- LOGICA ANIMAZIONE ---
     if (isMoving) {
         animTimer += deltaTime;
-        if (animTimer > 0.12f) {
+        if (animTimer > 0.15f) { // Puoi cambiare 0.15f per far muovere i piedi più o meno velocemente!
             currentFrame++;
-            if (currentFrame > 3) currentFrame = 0;
+            // Ora i frame sono solo due: 0 e 1!
+            if (currentFrame > 1) currentFrame = 0;
             animTimer = 0.0f;
         }
     }
@@ -59,6 +61,10 @@ glm::vec2 Player::calculateMovement(GLFWwindow* window, float deltaTime) {
     // Restituiamo lo spostamento al Main!
     return move;
 }
+
+
+
+
 
 
 // --- FUNZIONI GETTER E SETTER ---

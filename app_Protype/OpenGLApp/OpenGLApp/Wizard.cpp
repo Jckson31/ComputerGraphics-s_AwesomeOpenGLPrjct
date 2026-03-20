@@ -75,7 +75,7 @@ void Wizard::update(float deltaTime, bool isTavernBusy) {
 
 bool Wizard::tryInteract(glm::vec2 playerPos) {
 	if (active && !waitingForAnswer && glm::distance(playerPos, pos) < 80.0f) {
-		waitingForAnswer = false;
+		waitingForAnswer = true;
 		return true;
 	}
 	return false;
@@ -87,10 +87,10 @@ void Wizard::answerPrompt(bool accepted) {
 	walkingOut = true;  // se ne va in ogni caso dopo aver risposto
 
 	if (accepted) {
-		std::cout << "WOOSH! Il mago fa un INCANTESIMO e la taverna è PULITA!!" << std::endl;
+		std::cout << "WOOSH! Il mago fa un INCANTESIMO e la taverna e' PULITA!!" << std::endl;
 	}
 	else {
-		std::cout << "Il mago fa SPALLUCCE e si avvia verso l'uscità." << std::endl;
+		std::cout << "Il mago fa SPALLUCCE e si avvia verso l'uscita." << std::endl;
 	}
 }
 
@@ -98,5 +98,6 @@ glm::vec2 Wizard::getPos() const { return pos; }
 glm::vec2 Wizard::getSize() const { return size; }
 bool Wizard::isVisible() const { return (active || walkingIn || walkingOut || waitingForAnswer); }
 bool Wizard::isWaitingForAnswer() const { return waitingForAnswer; }
-
-#include "Wizard.h"
+bool Wizard::isEntering() const {
+	return walkingIn; // Se è true sta andando in su verso il palco, altrimenti va in giù!
+}

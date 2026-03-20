@@ -31,7 +31,7 @@ Customer::Customer(int tIdx, int sIdx, glm::vec2 startPos, glm::vec2 target, int
     isAngry = false;
 }
 
-void Customer::update(float deltaTime) {
+void Customer::update(float deltaTime, bool isBardPlaying) {
     if (isWalking) {
         float speed = 120.0f * deltaTime;
         glm::vec2 nextTarget;
@@ -53,7 +53,15 @@ void Customer::update(float deltaTime) {
         }
     }
     else {  // è fermo perche ha raggiunto la sedia, quindi inizia a perdere pazienza
-        patience -= deltaTime;
+        if (isBardPlaying) {
+            // Se il bardo suona, i clienti si distraggono e perdono pazienza più lentamente (metà velocità!)
+            patience -= (deltaTime * 0.5f);
+        }
+        else {
+            // Altrimenti, perdono pazienza normalmente
+            patience -= deltaTime;
+        }
+
         if (patience <= 0.0f) {
             isAngry = true;
         }

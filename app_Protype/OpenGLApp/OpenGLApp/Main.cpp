@@ -12,6 +12,7 @@
 #include <iostream>
 #include <vector>
 #include <cstdlib> // Per rand()
+#include <ctime>
 
 #include "Customer.h"
 #include "Bard.h"
@@ -70,6 +71,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
+void printDashboard();
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -107,6 +109,10 @@ int angryCustomers = 0;           // Contatore per il futuro Game Over (es. a 5 
 const int MAX_DIRT = 10;
 float randomDirtTimer = 0.0f;  // Timer per far comparire macchie a caso
 
+bool isGameOver = false;                // Memorizza se abbiamo perso
+const int MAX_ANGRY_CUSTOMERS = 10;     // Limite massimo di clienti arrabbiati
+
+
 // --- STRUTTURA SPORCO ---
 std::vector<Dirt> dirts; // Lista di tutte le macchie sul pavimento
 
@@ -114,6 +120,9 @@ std::vector<Dirt> dirts; // Lista di tutte le macchie sul pavimento
 // postazione per ritirare il cibo
 TavernObject counter(glm::vec2(400.0f, 550.0f), glm::vec2(600.0f, 100.0f), glm::vec3(0.6f, 0.3f, 0.1f));
 // startPos (centro del bancone), startSize (larghezza e altezza), startColor (marrone)
+
+TavernObject trashCan(glm::vec2(750.0f, 550.0f), glm::vec2(30.0f, 40.0f), glm::vec3(0.3f, 0.3f, 0.3f));
+
 // lista tavoli
 std::vector<TavernObject> tables;
 
@@ -144,46 +153,20 @@ bool checkCollision(glm::vec2 pos1, glm::vec2 size1, glm::vec2 pos2, glm::vec2 s
 std::vector<Customer> customers;
 float spawnTimer = 0.0f; // Timer per far apparire nuovi clienti
 
-// --- FUNZIONE PER STAMPARE LA BARRA DELLO SPORCO E CONTROLLARE IL GAME OVER ---
-void checkTavernDirt() {
-    int currentDirt = dirts.size();
-
-    // Disegniamo la barra nella console
-    std::cout << "\nLIVELLO SPORCIZIA: [";
-    for (int i = 0; i < MAX_DIRT; i++) {
-        if (i < currentDirt) std::cout << "#"; // Macchia
-        else std::cout << "-";                 // Pulito
-    }
-    std::cout << "] " << currentDirt << "/" << MAX_DIRT << "\n" << std::endl;
-
-    // Controllo Game Over
-    if (currentDirt >= MAX_DIRT) {
-        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-        std::cout << "               GAME OVER                " << std::endl;
-        std::cout << " L'ispettore sanitario ha chiuso il tuo " << std::endl;
-        std::cout << "  locale perche' era un porcile!        " << std::endl;
-        std::cout << " Punteggio Finale: " << score << " Monete" << std::endl;
-        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-
-        // In un gioco completo qui metteremmo in pausa il gioco. 
-        // Per ora azzeriamo i guadagni e la reputazione per farti capire che hai perso!
-        score = 0;
-        dirts.clear(); // Magicamente pulito, ma a che prezzo!
-    }
-}
-
 // --- VARIABILI BONUS E POWER-UP ---
 float speedBoostTimer = 0.0f; // Quanto tempo manca alla fine dello scatto
 float goldBoostTimer = 0.0f;  // Quanto tempo manca alla fine dei guadagni doppi
 
-Bard bard(glm::vec2(40.0f, 40.0f)); // Creiamo il bardo con la sua grandezza
+Bard bard(glm::vec2(40.0f, 60.0f)); // Creiamo il bardo con la sua grandezza
 float bardSpawnTimer = 0.0f; // Timer per farlo comparire
 
-Wizard wizard(glm::vec2(40.0f, 40.0f));
+Wizard wizard(glm::vec2(40.0f, 60.0f));
 
 
 int main()
 {
+    srand(time(NULL));
+
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -452,6 +435,24 @@ int main()
     //unsigned int texPlayer = loadTexture("resources/textures/player.png");
     unsigned int texBigTable = loadTexture("resources/textures/BigTable.png");
 
+    // --- CARICAMENTO ANIMAZIONI GIOCATORE ---
+    // (Assicurati che i nomi dei file qui sotto corrispondano ai nomi e percorsi esatti dei tuoi png!)
+    unsigned int texPlayerDown = loadTexture("resources/textures/player_front.png");
+    unsigned int texPlayerUp = loadTexture("resources/textures/player_back.png");
+    unsigned int texPlayerLeft = loadTexture("resources/textures/player_left.png");
+    unsigned int texPlayerRight = loadTexture("resources/textures/player_right.png");
+
+    // Le salviamo in un array per comodità: Indice 0=Giù, 1=Su, 2=Sinistra, 3=Destra
+    unsigned int playerTextures[4] = { texPlayerDown, texPlayerUp, texPlayerLeft, texPlayerRight };
+
+    // Texture del Mago
+    unsigned int texWizUp = loadTexture("resources/textures/wizard_back.png");
+    unsigned int texWizDown = loadTexture("resources/textures/wizard_front.png");
+
+    // Texture del Bardo
+    unsigned int texBardUp = loadTexture("resources/textures/bard_walking_back.png");
+    unsigned int texBardDown = loadTexture("resources/textures/bard_walking_front.png");
+    unsigned int texBardPlay = loadTexture("resources/textures/bard_playing.png");
 
 
     // render loop
@@ -468,110 +469,110 @@ int main()
         // -----
         processInput(window);
 
+        if (!isGameOver) {
+            // --- LOGICA SPORCO CASUALE NEL LOCALE ---
+            randomDirtTimer += deltaTime;
+            if (randomDirtTimer > 8.0f) { // Ogni 12 secondi (puoi abbassarlo per renderlo più difficile!)
+                randomDirtTimer = 0.0f; // Resetta il timer
 
-        // --- LOGICA SPORCO CASUALE NEL LOCALE ---
-        randomDirtTimer += deltaTime;
-        if (randomDirtTimer > 8.0f) { // Ogni 12 secondi (puoi abbassarlo per renderlo più difficile!)
-            randomDirtTimer = 0.0f; // Resetta il timer
+                // Generiamo coordinate X e Y casuali per la macchia
+                // La X va da 50 a 750 (per non farle uscire dai muri laterali)
+                // La Y va da 50 a 450 (per non farle finire SOTTO o DIETRO il bancone della cucina)
+                float randomX = 50.0f + (rand() % 700);
+                float randomY = 50.0f + (rand() % 400);
 
-            // Generiamo coordinate X e Y casuali per la macchia
-            // La X va da 50 a 750 (per non farle uscire dai muri laterali)
-            // La Y va da 50 a 450 (per non farle finire SOTTO o DIETRO il bancone della cucina)
-            float randomX = 50.0f + (rand() % 700);
-            float randomY = 50.0f + (rand() % 400);
+                dirts.push_back(Dirt(glm::vec2(randomX, randomY)));
 
-            dirts.push_back(Dirt(glm::vec2(randomX, randomY)));
-
-            std::cout << "E' apparsa una macchia sul pavimento..." << std::endl;
-            checkTavernDirt(); // Aggiorna la barra e controlla il Game Over
-        }
-
-        // --- AGGIORNAMENTO TIMER DEI BONUS ---
-        // --- AGGIORNAMENTO DEL GIOCATORE ---
-        player.update(deltaTime); // Il giocatore gestisce da solo il suo scatto!
-
-        // --- AGGIORNAMENTO TIMER BARDO ---
-        if (goldBoostTimer > 0.0f) {
-            goldBoostTimer -= deltaTime;
-            if (goldBoostTimer <= 0.0f) {
-                bard.stopPlaying(); // Diciamo al bardo di smettere!
-                std::cout << "Il bardo ha TERMINATO l'esibizione e se ne va." << std::endl;
+                std::cout << "E' apparsa una macchia sul pavimento..." << std::endl;
+                printDashboard(); // Aggiorna la barra e controlla il Game Over
             }
-        }
 
-        // Il Bardo pensa e si muove tutto da solo!
-        bard.update(deltaTime, wizard.isVisible());
-        wizard.update(deltaTime, bard.isVisible());
+            // --- AGGIORNAMENTO TIMER DEI BONUS ---
+            // --- AGGIORNAMENTO DEL GIOCATORE ---
+            player.update(deltaTime); // Il giocatore gestisce da solo il suo scatto!
+
+            // --- AGGIORNAMENTO TIMER BARDO ---
+            if (goldBoostTimer > 0.0f) {
+                goldBoostTimer -= deltaTime;
+                if (goldBoostTimer <= 0.0f) {
+                    bard.stopPlaying(); // Diciamo al bardo di smettere!
+                    std::cout << "Il bardo ha TERMINATO l'esibizione e se ne va." << std::endl;
+                }
+            }
+
+            // Il Bardo pensa e si muove tutto da solo!
+            bard.update(deltaTime, wizard.isVisible());
+            wizard.update(deltaTime, bard.isVisible());
 
 
 
 
 
-        // --- LOGICA SPAWN CLIENTI ---
-        spawnTimer += deltaTime;
-        if (spawnTimer > currentSpawnRate) { // <-- MODIFICA QUI
-            spawnTimer = 0.0f;
+            // --- LOGICA SPAWN CLIENTI ---
+            spawnTimer += deltaTime;
+            if (spawnTimer > currentSpawnRate) { // <-- MODIFICA QUI
+                spawnTimer = 0.0f;
 
-            // Creiamo una piccola struttura temporanea per salvare le sedie libere
-            struct FreeSeat { int tId; int sId; };
-            std::vector<FreeSeat> freeSeats;
+                // Creiamo una piccola struttura temporanea per salvare le sedie libere
+                struct FreeSeat { int tId; int sId; };
+                std::vector<FreeSeat> freeSeats;
 
-            // Controlliamo ogni tavolo e ogni sedia
-            for (int i = 0; i < tables.size(); i++) {
-                for (int j = 0; j < tables[i].getSeatCount(); j++) {
-                    bool isFree = true;
-                    // Controlliamo se qualche cliente è già seduto qui
-                    for (int k = 0; k < customers.size(); k++) {
-                        if (customers[k].table == i && customers[k].seat == j) {
-                            isFree = false;
-                            break;
+                // Controlliamo ogni tavolo e ogni sedia
+                for (int i = 0; i < tables.size(); i++) {
+                    for (int j = 0; j < tables[i].getSeatCount(); j++) {
+                        bool isFree = true;
+                        // Controlliamo se qualche cliente è già seduto qui
+                        for (int k = 0; k < customers.size(); k++) {
+                            if (customers[k].table == i && customers[k].seat == j) {
+                                isFree = false;
+                                break;
+                            }
+                        }
+                        if (isFree) {
+                            freeSeats.push_back({ i, j }); // Salviamo sia l'ID del tavolo che quello della sedia
                         }
                     }
-                    if (isFree) {
-                        freeSeats.push_back({ i, j }); // Salviamo sia l'ID del tavolo che quello della sedia
+                }
+
+                if (freeSeats.size() > 0) {
+                    int randomIndex = rand() % freeSeats.size();
+                    FreeSeat chosen = freeSeats[randomIndex];
+
+                    glm::vec2 startPos(400.0f, -20.0f);
+                    glm::vec2 target = tables[chosen.tId].getSeatPos(chosen.sId);
+                    int randomFood = rand() % 4;
+
+                    // Creiamo l'oggetto usando il Costruttore!
+                    Customer newCust(chosen.tId, chosen.sId, startPos, target, randomFood, currentMaxPatience);
+
+                    customers.push_back(newCust);
+
+                }
+            }
+
+            // --- LOGICA MOVIMENTO E PAZIENZA CLIENTI ---
+            for (int i = 0; i < customers.size(); ) {
+
+                // Il cliente pensa da solo!
+                customers[i].update(deltaTime, bard.isPlaying());
+
+                // Controlliamo solo se ha finito la pazienza
+                if (customers[i].isAngry) {
+                    angryCustomers++;
+                    std::cout << "Un cliente se n'e' andato arrabbiato! -5 Monete!" << std::endl;
+                    score -= 5;
+
+                    if (rand() % 100 < 40) {
+                        dirts.push_back(Dirt(customers[i].getPos()));
+                        printDashboard();
                     }
+                    customers.erase(customers.begin() + i);
+                }
+                else {
+                    i++;
                 }
             }
-
-            if (freeSeats.size() > 0) {
-                int randomIndex = rand() % freeSeats.size();
-                FreeSeat chosen = freeSeats[randomIndex];
-
-                glm::vec2 startPos(400.0f, -20.0f);
-                glm::vec2 target = tables[chosen.tId].getSeatPos(chosen.sId);
-                int randomFood = rand() % 4;
-
-                // Creiamo l'oggetto usando il Costruttore!
-                Customer newCust(chosen.tId, chosen.sId, startPos, target, randomFood, currentMaxPatience);
-
-                customers.push_back(newCust);
-
-            }
         }
-
-        // --- LOGICA MOVIMENTO E PAZIENZA CLIENTI ---
-        for (int i = 0; i < customers.size(); ) {
-
-            // Il cliente pensa da solo!
-            customers[i].update(deltaTime);
-
-            // Controlliamo solo se ha finito la pazienza
-            if (customers[i].isAngry) {
-                angryCustomers++;
-                std::cout << "Un cliente se n'e' andato arrabbiato! -5 Monete!" << std::endl;
-                score -= 5;
-
-                if (rand() % 100 < 40) {
-                    dirts.push_back(Dirt(customers[i].getPos()));
-                    checkTavernDirt();
-                }
-                customers.erase(customers.begin() + i);
-            }
-            else {
-                i++;
-            }
-        }
-
 
         // render
         // ------
@@ -638,6 +639,14 @@ int main()
         ourShader.use();
         glBindVertexArray(cubeVAO);
 
+        // activate shader
+        ourShader.use();
+
+        // ---> IMPORTANTE: Valori predefiniti per TUTTI gli oggetti non animati! <---
+        ourShader.setVec2("texScale", 1.0f, 1.0f);
+        ourShader.setVec2("texOffset", 0.0f, 0.0f);
+
+
         // ===== BANCONE =====
         ourShader.setVec3("noteColor", counter.getColor());
         glm::mat4 modelKitchen = glm::mat4(1.0f);
@@ -645,6 +654,15 @@ int main()
         modelKitchen = glm::scale(modelKitchen, glm::vec3(counter.getSize().x, counter.getSize().y, 1.0f));
         ourShader.setMat4("model", modelKitchen);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // ===== CESTINO =====
+        ourShader.setVec3("noteColor", trashCan.getColor());
+        glm::mat4 modelTrash = glm::mat4(1.0f);
+        modelTrash = glm::translate(modelTrash, glm::vec3(trashCan.getPos().x, trashCan.getPos().y, 0.0f));
+        modelTrash = glm::scale(modelTrash, glm::vec3(trashCan.getSize().x, trashCan.getSize().y, 1.0f));
+        ourShader.setMat4("model", modelTrash);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
 
         // ===== TAVOLI =====
         // ciclo for disegna i tavoli uno per uno
@@ -658,20 +676,57 @@ int main()
         }
 
 
-        /// ===== GIOCATORE (OSTE) =====
+        // ===== GIOCATORE (OSTE) =====
         ourShader.use();
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texPlayer);
+        glBindTexture(GL_TEXTURE_2D, playerTextures[player.getCurrentDir()]);
         ourShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
+        ourShader.setVec2("texScale", 0.5f, 1.0f);
+        float xOffset = player.getCurrentFrame() * 0.5f;
+        ourShader.setVec2("texOffset", xOffset, 0.0f);
+
+        // ---> NUOVA LOGICA: RIDIMENSIONAMENTO GEOMETRICO DINAMICO <---
+        int dir = player.getCurrentDir();
+        float drawW, drawH;
+
+        //currentDir: 0=Giù, 1=Su, 2=Sinistra, 3=Destra
+        if (dir == 2 || dir == 3) {
+            // --- CAMMINATA LATERALE (Destra/Sinistra) ---
+            // PROVA A CAMBIARE QUESTI VALORI FINCHE' LA PROPORZIONE NON SEMBRA GIUSTA!
+            // Esempio: se è troppo grasso, diminuisci drawW. Se è troppo basso, aumenta drawH.
+            drawW = 40.0f; // Esempio: lo allarghiamo un po' geometricamente per accogliere lo sprite largo
+            drawH = 80.0f; // Esempio: manteniamo l'altezza orizzontale corretta per lo sprite
+            // *Nota: Se il tuo sprite laterale è nativamente quasi quadrato, 
+            // potresti voler usare, per esempio, drawW=50.0f; drawH=50.0f;
+        }
+        else if (dir == 1) {
+            drawW = 40.0f; // Valore base (40)
+            drawH = 80.0f; // Valore base (65) aumentato per la camminata verso l'alto
+        }
+        else {
+            // --- CAMMINATA VERTICALE (Su/Giu) ---
+            // Usiamo il valore base snello e alto che abbiamo impostato nel Player.cpp (es. 40x65)
+            drawW = player.getSize().x; // Valore base (40)
+            drawH = player.getSize().y; // Valore base (65)
+        }
+        // --------------------------------------------------------------
+
         glm::mat4 modelPlayer = glm::mat4(1.0f);
-        // USIAMO myPlayer.getPos() e myPlayer.getSize()
         modelPlayer = glm::translate(modelPlayer, glm::vec3(player.getPos().x, player.getPos().y, 0.15f));
-        modelPlayer = glm::scale(modelPlayer, glm::vec3(player.getSize().x, player.getSize().y, 1.0f));
+
+        // USIAMO I VALORI CALCOLATI DINAMICAMENTE PER LA SCALA!
+        modelPlayer = glm::scale(modelPlayer, glm::vec3(drawW, drawH, 1.0f));
+
         ourShader.setMat4("model", modelPlayer);
 
         glBindVertexArray(cubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // Resettiamo a 1.0 per gli altri oggetti
+        ourShader.setVec2("texScale", 1.0f, 1.0f);
+        ourShader.setVec2("texOffset", 0.0f, 0.0f);
+
 
         // ===== DISEGNA IL CIBO IN MANO =====
         int currentItem = player.getHeldItem(); // Leggiamo cosa ha in mano
@@ -715,27 +770,55 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
-        // ===== DISEGNA IL BARDO =====
+        /// ===== DISEGNA IL BARDO =====
         if (bard.isVisible()) {
+            ourShader.use();
+            glActiveTexture(GL_TEXTURE0);
 
-            if (bard.isPlaying()) {
-                ourShader.setVec3("noteColor", glm::vec3(0.9f, 0.4f, 0.8f));
-            }
-            else {
-                ourShader.setVec3("noteColor", glm::vec3(0.6f, 0.2f, 0.8f));
-            }
+            // 1. Rimuoviamo il vecchio filtro viola: ora usa i tuoi colori!
+            ourShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f));
+
+            // 2. Impostiamo l'animazione (Scale a 0.5 perché ha 2 frame)
+            ourShader.setVec2("texScale", 0.5f, 1.0f);
+            float bOffset = bard.getCurrentFrame() * 0.5f;
+            ourShader.setVec2("texOffset", bOffset, 0.0f);
+
+            // 3. Scegliamo l'immagine in base a cosa sta facendo
+            int bState = bard.getActionState();
+            if (bState == 2) glBindTexture(GL_TEXTURE_2D, texBardPlay);
+            else if (bState == 1) glBindTexture(GL_TEXTURE_2D, texBardUp);
+            else glBindTexture(GL_TEXTURE_2D, texBardDown);
 
             glm::mat4 modelBard = glm::mat4(1.0f);
             modelBard = glm::translate(modelBard, glm::vec3(bard.getPos().x, bard.getPos().y, 0.12f));
             modelBard = glm::scale(modelBard, glm::vec3(bard.getSize().x, bard.getSize().y, 1.0f));
             ourShader.setMat4("model", modelBard);
             glDrawArrays(GL_TRIANGLES, 0, 36);
+
+            // 4. RESET per gli altri oggetti
+            ourShader.setVec2("texScale", 1.0f, 1.0f);
+            ourShader.setVec2("texOffset", 0.0f, 0.0f);
         }
 
         // ===== DISEGNA IL MAGO =====
         if (wizard.isVisible()) {
-            // Diamo al mago un colore Azzurro brillante/magico
-            ourShader.setVec3("noteColor", glm::vec3(0.2f, 0.7f, 1.0f));
+            ourShader.use();
+            glActiveTexture(GL_TEXTURE0);
+
+            // 1. Rimuoviamo il vecchio filtro azzurro
+            ourShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f));
+
+            // 2. Il Mago ha solo 1 frame per file, quindi la finestra è grande tutta l'immagine!
+            ourShader.setVec2("texScale", 1.0f, 1.0f);
+            ourShader.setVec2("texOffset", 0.0f, 0.0f);
+
+            // 3. Scegliamo l'immagine (Su o Giù)
+            if (wizard.isEntering()) {
+                glBindTexture(GL_TEXTURE_2D, texWizUp);
+            }
+            else {
+                glBindTexture(GL_TEXTURE_2D, texWizDown);
+            }
 
             glm::mat4 modelWizard = glm::mat4(1.0f);
             modelWizard = glm::translate(modelWizard, glm::vec3(wizard.getPos().x, wizard.getPos().y, 0.12f));
@@ -826,36 +909,37 @@ bool checkCollision(glm::vec2 pos1, glm::vec2 size1, glm::vec2 pos2, glm::vec2 s
 */
 
 
-/*
-// --- FUNZIONE PER STAMPARE LA BARRA DELLO SPORCO E CONTROLLARE IL GAME OVER ---
-void checkTavernDirt() {
+// --- DASHBOARD DELLA TAVERNA ---
+void printDashboard() {
     int currentDirt = dirts.size();
 
-    // Disegniamo la barra nella console
-    std::cout << "\nLIVELLO SPORCIZIA: [";
+    std::cout << "\n================ STATO TAVERNA ================" << std::endl;
+
+    // 1. Barra dello Sporco
+    std::cout << " SPORCIZIA: [";
     for (int i = 0; i < MAX_DIRT; i++) {
-        if (i < currentDirt) std::cout << "#"; // Macchia
-        else std::cout << "-";                 // Pulito
+        if (i < currentDirt) std::cout << "#"; else std::cout << "-";
     }
-    std::cout << "] " << currentDirt << "/" << MAX_DIRT << "\n" << std::endl;
+    std::cout << "] " << currentDirt << "/" << MAX_DIRT << std::endl;
 
-    // Controllo Game Over
-    if (currentDirt >= MAX_DIRT) {
-        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-        std::cout << "               GAME OVER                " << std::endl;
-        std::cout << " L'ispettore sanitario ha chiuso il tuo " << std::endl;
-        std::cout << "  locale perche' era un porcile!        " << std::endl;
+    // 2. Barra dei Clienti Arrabbiati
+    std::cout << " CLIENTI ANDATI VIA:    [";
+    for (int i = 0; i < MAX_ANGRY_CUSTOMERS; i++) {
+        if (i < angryCustomers) std::cout << "X"; else std::cout << "-";
+    }
+    std::cout << "] " << angryCustomers << "/" << MAX_ANGRY_CUSTOMERS << std::endl;
+    std::cout << "===============================================\n" << std::endl;
+
+    // --- CONTROLLI GAME OVER ---
+    if (currentDirt >= MAX_DIRT && !isGameOver) {
+        isGameOver = true;
+        std::cout << "!!!!!!!!!!!!!!!! GAME OVER !!!!!!!!!!!!!!!!" << std::endl;
+        std::cout << " L'ispettore sanitario ha chiuso il locale " << std::endl;
+        std::cout << " perche' era diventato un porcile!         " << std::endl;
         std::cout << " Punteggio Finale: " << score << " Monete" << std::endl;
-        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-
-        // In un gioco completo qui metteremmo in pausa il gioco.
-        // Per ora azzeriamo i guadagni e la reputazione per farti capire che hai perso!
-        score = 0;
-        dirts.clear(); // Magicamente pulito, ma a che prezzo!
+        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" << std::endl;
     }
 }
-*/
-
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -863,6 +947,9 @@ void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+
+    if (isGameOver) return; // se c'è game over, blocchiamo tutti gli input
 
     // 1. Chiediamo al giocatore di calcolare il movimento (e aggiornare le sue animazioni)
     glm::vec2 moveDir = player.calculateMovement(window, deltaTime);
@@ -889,8 +976,9 @@ void processInput(GLFWwindow* window)
 
     // --- CONTROLLO COLLISIONI ASSE X ---
     bool colX = false;
-    // Controllo contro il bancone (counter)
+    // Controllo contro il bancone (counter) E il cestino (trashCan)
     if (checkCollision(nextPosX, playerSize, counter.getPos(), counter.getSize())) colX = true;
+    if (checkCollision(nextPosX, playerSize, trashCan.getPos(), trashCan.getSize())) colX = true;
 
     // Controllo contro i tavoli
     for (int i = 0; i < tables.size(); i++) {
@@ -901,8 +989,9 @@ void processInput(GLFWwindow* window)
 
     // --- CONTROLLO COLLISIONI ASSE Y ---
     bool colY = false;
-    // Controllo contro il bancone (counter)
+    // Controllo contro il bancone (counter) E il cestino (trashCan)
     if (checkCollision(nextPosY, playerSize, counter.getPos(), counter.getSize())) colY = true;
+    if (checkCollision(nextPosY, playerSize, trashCan.getPos(), trashCan.getSize())) colY = true;
 
     // Controllo contro i tavoli
     for (int i = 0; i < tables.size(); i++) {
@@ -1010,6 +1099,7 @@ void processInput(GLFWwindow* window)
                         // --- LOGICA LEVEL UP ---
                         if (customersServed > 0 && customersServed % 5 == 0) {
                             currentLevel++;
+                            angryCustomers = 0; // azzeramento clienti arrabbiati
                             std::cout << "\n====================================" << std::endl;
                             std::cout << "*** LEVEL UP! LIVELLO " << currentLevel << " ***" << std::endl;
                             if (currentSpawnRate > 2.0f) currentSpawnRate -= 2.0f;
@@ -1019,7 +1109,7 @@ void processInput(GLFWwindow* window)
                         // --- SPAWN SPORCO ---
                         if (rand() % 100 < 40) {
                             dirts.push_back(Dirt(custPos));
-                            checkTavernDirt();
+                            printDashboard();
                         }
 
                         player.setHeldItem(-1); // Svuotiamo le mani tramite il Setter!
@@ -1041,11 +1131,19 @@ void processInput(GLFWwindow* window)
     // Aggiorniamo lo stato del tasto per il prossimo frame
     spacebarPressed = spaceIsPressed;
 
-    // Buttare il cibo
+    // BUTTARE IL CIBO NEL CESTINO (TASTO C)
     if (cIsPressed && !cWasPressed) {
-        if (player.getHeldItem() != -1) {
-            std::cout << "Piatto buttato via!" << std::endl;
-            player.setHeldItem(-1); // Svuota le mani
+        if (player.getHeldItem() != -1) { // Se abbiamo qualcosa in mano
+
+            // Controlliamo se siamo vicini al cestino!
+            if (glm::distance(player.getPos(), trashCan.getPos()) < 80.0f) {
+                std::cout << "Piatto buttato nel cestino!" << std::endl;
+                player.setHeldItem(-1); // Svuota le mani
+            }
+            else {
+                std::cout << "Devi avvicinarti al cestino per buttare il cibo!" << std::endl;
+            }
+
         }
     }
     cWasPressed = cIsPressed;
@@ -1060,7 +1158,7 @@ void processInput(GLFWwindow* window)
             if (glm::distance(player.getPos(), dirts[i].getPos()) < 60.0f) {
                 dirts.erase(dirts.begin() + i);
                 std::cout << "Hai spazzato via una macchia!" << std::endl;
-                checkTavernDirt(); // Aggiorna la barra in console
+                printDashboard(); // Aggiorna la barra in console
                 cleanedSomething = true;
                 break; // Puliamo una macchia alla volta
             }
@@ -1081,7 +1179,7 @@ void processInput(GLFWwindow* window)
                 dirts.clear(); // MAGIA! 
                 wizard.answerPrompt(true);
                 std::cout << "Monete rimanenti: " << score << std::endl;
-                checkTavernDirt(); // Stampa la barra pulita in console
+                printDashboard(); // Stampa la barra pulita in console
             }
             else {
                 std::cout << "Non hai 15 monete! Il mago ti guarda male e se ne va." << std::endl;

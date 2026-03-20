@@ -32,7 +32,10 @@ public:
     glm::vec2 getSize() const;
     bool isVisible() const; // Ci dice se dobbiamo disegnarlo o no
     bool isWaitingForAnswer() const;
+    bool isEntering() const;
+
 };
+
 
 
 

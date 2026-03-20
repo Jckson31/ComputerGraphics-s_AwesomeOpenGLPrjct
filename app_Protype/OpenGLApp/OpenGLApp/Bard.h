@@ -13,6 +13,10 @@ private:
     float timeToLeave; // Quanto tempo aspetta prima di andarsene deluso
     float spawnTimer;  // Timer per farlo apparire
 
+    int currentFrame;
+    float animTimer;
+
+
 public:
     // Costruttore
     Bard(glm::vec2 startSize);
@@ -31,6 +35,8 @@ public:
     glm::vec2 getSize() const;
     bool isVisible() const; // Ci dice se dobbiamo disegnarlo o no
     bool isPlaying() const;
-};
 
+    int getCurrentFrame() const;
+    int getActionState() const;
+};
 

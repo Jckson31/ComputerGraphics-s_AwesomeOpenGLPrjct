@@ -171,11 +171,20 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\textures\awesomeface.png" />
+    <Image Include="resources\textures\bard_playing.png" />
+    <Image Include="resources\textures\bard_walking_back.png" />
+    <Image Include="resources\textures\bard_walking_front.png" />
     <Image Include="resources\textures\beer.png" />
     <Image Include="resources\textures\bread.png" />
     <Image Include="resources\textures\container.jpg" />
     <Image Include="resources\textures\meat.png" />
+    <Image Include="resources\textures\player_back.png" />
+    <Image Include="resources\textures\player_front.png" />
+    <Image Include="resources\textures\player_right.png" />
+    <Image Include="resources\textures\player_left.png" />
     <Image Include="resources\textures\soup.png" />
+    <Image Include="resources\textures\wizard_back.png" />
+    <Image Include="resources\textures\wizard_front.png" />
     <Image Include="resources\textures\wood.jpeg" />
   </ItemGroup>
   <ItemGroup>
