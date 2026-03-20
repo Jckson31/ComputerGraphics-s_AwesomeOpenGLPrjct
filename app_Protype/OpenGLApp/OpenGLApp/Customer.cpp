@@ -29,6 +29,21 @@ Customer::Customer(int tIdx, int sIdx, glm::vec2 startPos, glm::vec2 target, int
                                                        //Cosi non passano attraverso il tavolo ma fanno percorsi sicuri
     waiting = true;
     isAngry = false;
+
+    currentFrame = 0;
+    animTimer = 0.0f;
+    currentDir = 0;
+
+    float r = (rand() % 100) / 100.0f;
+    float g = (rand() % 100) / 100.0f;
+    float b = (rand() % 100) / 100.0f;
+    clothesColor = glm::vec3(r, g, b);
+
+    // Colore casuale dei capelli!
+    float hr = (rand() % 100) / 100.0f;
+    float hg = (rand() % 100) / 100.0f;
+    float hb = (rand() % 100) / 100.0f;
+    hairColor = glm::vec3(hr, hg, hb);
 }
 
 void Customer::update(float deltaTime, bool isBardPlaying) {
@@ -51,6 +66,27 @@ void Customer::update(float deltaTime, bool isBardPlaying) {
             glm::vec2 direction = glm::normalize(nextTarget - pos);  //calcola la direzione 
             pos += direction * speed;
         }
+
+        // --- LOGICA DIREZIONE ---
+        float dx = targetPos.x - pos.x;
+        float dy = targetPos.y - pos.y;
+
+        if (std::abs(dx) > std::abs(dy)) {
+            if (dx < 0) currentDir = 2; // Sinistra
+            else currentDir = 3;        // Destra
+        }
+        else {
+            if (dy > 0) currentDir = 1; // Su
+            else currentDir = 0;        // Giù
+        }
+
+        // --- LOGICA ANIMAZIONE ---
+        animTimer += deltaTime;
+        if (animTimer > 0.15f) {
+            currentFrame++;
+            if (currentFrame > 1) currentFrame = 0;
+            animTimer = 0.0f;
+        }
     }
     else {  // è fermo perche ha raggiunto la sedia, quindi inizia a perdere pazienza
         if (isBardPlaying) {
@@ -71,3 +107,7 @@ void Customer::update(float deltaTime, bool isBardPlaying) {
 glm::vec2 Customer::getPos() const { return pos; }
 float Customer::getPatience() const { return patience; }
 bool Customer::getIsWalking() const { return isWalking; }
+int Customer::getCurrentFrame() const { return currentFrame; }
+int Customer::getCurrentDir() const { return currentDir; }
+glm::vec3 Customer::getClothesColor() const { return clothesColor; }
+glm::vec3 Customer::getHairColor() const { return hairColor; }

@@ -414,14 +414,12 @@ int main()
     foodStations.push_back(FoodStation(glm::vec2(650.0f, 550.0f), glm::vec2(40.0f, 40.0f), 3));
 
     unsigned int texFloor = loadTexture("resources/textures/wood.jpeg");
-    unsigned int texPlayer = loadTexture("resources/textures/awesomeface.png");
 
     unsigned int texBeer = loadTexture("resources/textures/beer.png");
     unsigned int texMeat = loadTexture("resources/textures/meat.png");
     unsigned int texBread = loadTexture("resources/textures/bread.png");
     unsigned int texSoup = loadTexture("resources/textures/soup.png");
 
-    unsigned int texCustomer = loadTexture("resources/textures/awesomeface.png");
 
     unsigned int foodTextures[4];
     foodTextures[0] = texBeer;   // 0 = Birra
@@ -454,6 +452,14 @@ int main()
     unsigned int texBardDown = loadTexture("resources/textures/bard_walking_front.png");
     unsigned int texBardPlay = loadTexture("resources/textures/bard_playing.png");
 
+    unsigned int texCustDown = loadTexture("resources/textures/customer_front.png");
+    unsigned int texCustUp = loadTexture("resources/textures/customer_back.png");
+    unsigned int texCustLeft = loadTexture("resources/textures/customer_left.png");
+    unsigned int texCustRight = loadTexture("resources/textures/customer_right.png");
+    unsigned int texCustSeated = loadTexture("resources/textures/customer1.png");
+
+    // 0=Giu, 1=Su, 2=Sinistra, 3=Destra
+    unsigned int custTextures[4] = { texCustDown, texCustUp, texCustLeft, texCustRight };
 
     // render loop
     // -----------
@@ -829,42 +835,83 @@ int main()
 
         // ===== DISEGNA I CLIENTI E I LORO ORDINI =====
         for (int i = 0; i < customers.size(); i++) {
+            glm::vec2 custPos = customers[i].getPos();
+            bool isWalking = customers[i].getIsWalking();
 
-            glm::vec2 custPos = customers[i].getPos(); // USIAMO IL GETTER
-
+            ourShader.use();
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texCustomer);
 
-            glm::vec3 custColor = glm::vec3(1.0f, 1.0f, 1.0f);
+            ourShader.setBool("usePaletteSwap", true);
 
-            if (!customers[i].getIsWalking()) { // USIAMO IL GETTER
-                if (customers[i].getPatience() > 20.0f) { // USIAMO IL GETTER
-                    custColor = glm::vec3(0.2f, 0.3f, 0.8f);
-                }
-                else if (customers[i].getPatience() > 10.0f) {
-                    custColor = glm::vec3(0.9f, 0.5f, 0.1f);
+            ourShader.setVec3("originalClothesColor", glm::vec3(0.05f, 0.38f, 0.05f)); // Verde originale
+            ourShader.setVec3("originalHairColor", glm::vec3(0.30f, 0.18f, 0.05f));    // Marrone originale
+
+            ourShader.setVec3("newHairColor", customers[i].getHairColor());
+
+            int cDir = customers[i].getCurrentDir();
+            int cFrame = customers[i].getCurrentFrame();
+
+            // 1. Scegliamo la texture in base alla direzione
+            glBindTexture(GL_TEXTURE_2D, custTextures[cDir]);
+
+            // 2. Impostiamo l'animazione (hanno sempre 2 frame, quindi scala 0.5)
+            ourShader.setVec2("texScale", 0.5f, 1.0f);
+            ourShader.setVec2("texOffset", cFrame * 0.5f, 0.0f);
+
+            // 3. COLORE VESTITI E PAZIENZA
+            glm::vec3 tint = customers[i].getClothesColor();
+            // Se sta perdendo la pazienza, diventa rosso rabbia!
+            if (!customers[i].getIsWalking() && customers[i].getPatience() <= 10.0f) {
+                // Se è arrabbiato, spegniamo il Palette Swap e lo coloriamo tutto di rosso come facevamo prima!
+                ourShader.setBool("usePaletteSwap", false);
+                tint = glm::vec3(1.0f, 0.1f, 0.1f);
+            }
+            ourShader.setVec3("noteColor", tint);
+
+            if (!isWalking) {
+                // IL CLIENTE E' SEDUTO
+                glBindTexture(GL_TEXTURE_2D, texCustSeated); // Usiamo l'immagine singola
+                ourShader.setVec2("texScale", 1.0f, 1.0f); // Finestra intera
+                ourShader.setVec2("texOffset", 0.0f, 0.0f); // Nessuno scorrimento
+
+                drawW = 40.0f; // Proporzioni dell'omino fermo (aggiusta se ti sembra schiacciato)
+                drawH = 65.0f;
+            }
+            else {
+                // IL CLIENTE STA CAMMINANDO
+                glBindTexture(GL_TEXTURE_2D, custTextures[cDir]); // Usiamo l'array delle direzioni
+                ourShader.setVec2("texScale", 0.5f, 1.0f);        // Finestra a metà
+                ourShader.setVec2("texOffset", cFrame * 0.5f, 0.0f); // Scorrimento animato
+
+                if (cDir == 2 || cDir == 3) {
+                    drawW = 55.0f; // Più largo di lato
+                    drawH = 65.0f;
                 }
                 else {
-                    custColor = glm::vec3(0.8f, 0.1f, 0.1f);
+                    drawW = 40.0f; // Normale in su/giù
+                    drawH = 65.0f;
                 }
             }
 
-            ourShader.setVec3("noteColor", custColor);
             glm::mat4 modelCust = glm::mat4(1.0f);
-            modelCust = glm::translate(modelCust, glm::vec3(custPos.x, custPos.y, 0.11f)); // Z = 0.11, sopra i tavoli
-            modelCust = glm::scale(modelCust, glm::vec3(40.0f, 40.0f, 1.0f));
+            modelCust = glm::translate(modelCust, glm::vec3(custPos.x, custPos.y, 0.11f));
+            modelCust = glm::scale(modelCust, glm::vec3(drawW, drawH, 1.0f));
             ourShader.setMat4("model", modelCust);
             glDrawArrays(GL_TRIANGLES, 0, 36);
 
-            if (!customers[i].getIsWalking()) { // Mostra il cibo solo se è seduto!
+            // 5. RESET per gli altri oggetti
+            ourShader.setBool("usePaletteSwap", false);
+            ourShader.setVec2("texScale", 1.0f, 1.0f);
+            ourShader.setVec2("texOffset", 0.0f, 0.0f);
+
+            // --- DISEGNA L'ORDINE ---
+            if (!customers[i].getIsWalking()) {
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, foodTextures[customers[i].desiredFood]);
 
-                ourShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f)); // Colore normale
+                ourShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f));
                 glm::mat4 modelOrder = glm::mat4(1.0f);
-
-                // Lo posizioniamo 35 pixel SOPRA la testa del cliente
-                modelOrder = glm::translate(modelOrder, glm::vec3(custPos.x, custPos.y + 35.0f, 0.12f));
+                modelOrder = glm::translate(modelOrder, glm::vec3(custPos.x, custPos.y + 45.0f, 0.12f));
                 modelOrder = glm::scale(modelOrder, glm::vec3(25.0f, 25.0f, 1.0f));
                 ourShader.setMat4("model", modelOrder);
                 glDrawArrays(GL_TRIANGLES, 0, 36);

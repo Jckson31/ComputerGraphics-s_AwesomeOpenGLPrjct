@@ -10,12 +10,19 @@ private:
     float safeX;
     float patience;
 
+    int currentFrame;
+    float animTimer;
+    int currentDir; // 0=Giu, 1=Su, 2=Sinistra, 3=Destra
+    glm::vec3 clothesColor; // Il colore casuale!
+    glm::vec3 hairColor;
+
 public:
     int table;
     int seat;
     int desiredFood;
     bool waiting;
     bool isAngry;
+
 
     // Costruttore
     Customer(int tIdx, int sIdx, glm::vec2 startPos, glm::vec2 target, int food, float startPatience);
@@ -27,7 +34,13 @@ public:
     glm::vec2 getPos() const;
     float getPatience() const;
     bool getIsWalking() const;
+
+    int getCurrentFrame() const;
+    int getCurrentDir() const;
+    glm::vec3 getClothesColor() const;
+    glm::vec3 getHairColor() const;
 };
+
 
 
 

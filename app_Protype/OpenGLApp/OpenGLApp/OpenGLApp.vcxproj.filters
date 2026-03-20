@@ -39,6 +39,12 @@
     <ClCompile Include="FoodStations.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="Dirt.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="Wizard.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shader_s.h">
@@ -66,6 +72,12 @@
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="FoodStations.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Dirt.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Wizard.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
   </ItemGroup>
@@ -103,6 +115,48 @@
       <Filter>File di risorse</Filter>
     </Image>
     <Image Include="resources\textures\soup.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\bard_playing.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\bard_walking_back.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\bard_walking_front.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\player_back.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\player_front.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\player_right.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\player_left.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\wizard_back.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\wizard_front.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\customer_back.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\customer_front.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\customer_left.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\customer_right.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\customer1.png">
       <Filter>File di risorse</Filter>
     </Image>
   </ItemGroup>
