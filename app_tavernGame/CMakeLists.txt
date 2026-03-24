@@ -9,7 +9,8 @@ include_directories(
         lib/glad/include
         lib/glfw-3.3.8.bin.WIN64/include
         lib/glm-master
-        src
+        include
+	src
 )
 
 # --- 2. SORGENTI ---

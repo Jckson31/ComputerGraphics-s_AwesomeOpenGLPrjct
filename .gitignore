@@ -15,6 +15,9 @@ app_tavernGame/*
 !app_tavernGame/src/
 !app_tavernGame/src/**
 
+!app_tavernGame/include/
+!app_tavernGame/include/**
+
 !app_tavernGame/lib/
 !app_tavernGame/lib/**
 
