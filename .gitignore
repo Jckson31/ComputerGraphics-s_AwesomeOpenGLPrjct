@@ -1,34 +1,30 @@
-# --- Visual Studio ---
-.vs/
-[Dd]ebug/
-[Rr]elease/
-x64/
-x86/
-*.sln.view
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-*.db
-*.opendb
+# 1. Ignora tutto
+*
 
-# --- File di compilazione ---
-OpenGLApp/**/*.obj
-*.ilk
-*.pdb
-*.tlog
-*.lastbuildstate
-*.idb
-*.exe
-*.recipe
-*.log
-*.iobj
-*.ipdb
+# 2. Permetti il file .gitignore stesso
+!.gitignore
+!README.md
 
-# --- VS Code ---
-.vscode/
+# 3. Permetti la cartella madre (senza entrare nel contenuto)
+!app_tavernGame/
 
-# --- Librerie e Output ---
-OpenGLApp/**/*.lib
-OpenGLApp/**/*.dll
-*.app
+# 4. Ignora tutto quello che c'è dentro app_tavernGame
+app_tavernGame/*
+
+# 5. RI-APRI le sottocartelle E tutto il loro contenuto (il segreto è il /**)
+!app_tavernGame/src/
+!app_tavernGame/src/**
+
+!app_tavernGame/lib/
+!app_tavernGame/lib/**
+
+!app_tavernGame/models/
+!app_tavernGame/models/**
+
+!app_tavernGame/shaders/
+!app_tavernGame/shaders/**
+
+!app_tavernGame/textures/
+!app_tavernGame/textures/**
+
+!app_tavernGame/CMakeLists.txt

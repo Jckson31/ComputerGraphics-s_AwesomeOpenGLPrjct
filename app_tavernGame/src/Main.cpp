@@ -2,9 +2,6 @@
 ================================================================================
                     GIOCO DELLA TAVERNA - VERSIONE ORGANIZZATA
 ================================================================================
-Versione del codice originale, solo riorganizzato e pulito.
-Nessun cambio a gameplay, texture, o comandi - tutto rimane uguale!
-================================================================================
 */
 
 #include <glad/glad.h>
@@ -152,7 +149,7 @@ void checkTavernDirt() {
         std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
         std::cout << "               GAME OVER                " << std::endl;
         std::cout << " L'ispettore sanitario ha chiuso il tuo " << std::endl;
-        std::cout << "  locale perche' era un porcile!        " << std::endl;
+        std::cout << "      locale perche' era un porcile!    "<< std::endl;
         std::cout << " Punteggio Finale: " << score << " Monete" << std::endl;
         std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
 
@@ -234,7 +231,8 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     // build and compile shader program
-    Shader ourShader("shader.vs", "shader.fs");
+    // Cambia da "shader.vs" a "shaders/shader.vs"
+    Shader ourShader("shaders/shader.vs", "shaders/shader.fs");
 
     // set up vertex data
     float cubeVertices[] = {
@@ -296,13 +294,13 @@ int main()
     glEnableVertexAttribArray(1);
 
     // load textures
-    unsigned int texFloor = loadTexture("resources/textures/wood.jpeg");
-    unsigned int texPlayer = loadTexture("resources/textures/awesomeface.png");
-    unsigned int texBeer = loadTexture("resources/textures/beer.png");
-    unsigned int texMeat = loadTexture("resources/textures/meat.png");
-    unsigned int texBread = loadTexture("resources/textures/bread.png");
-    unsigned int texSoup = loadTexture("resources/textures/soup.png");
-    unsigned int texCustomer = loadTexture("resources/textures/awesomeface.png");
+    unsigned int texFloor = loadTexture("textures/wood.jpeg");
+    unsigned int texPlayer = loadTexture("textures/awesomeface.png");
+    unsigned int texBeer = loadTexture("textures/beer.png");
+    unsigned int texMeat = loadTexture("textures/meat.png");
+    unsigned int texBread = loadTexture("textures/bread.png");
+    unsigned int texSoup = loadTexture("textures/soup.png");
+    unsigned int texCustomer = loadTexture("textures/awesomeface.png");
 
     unsigned int foodTextures[4];
     foodTextures[0] = texBeer;
