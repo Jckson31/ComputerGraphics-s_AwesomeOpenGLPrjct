@@ -45,6 +45,9 @@
     <ClCompile Include="Wizard.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shader_s.h">
@@ -80,6 +83,15 @@
     <ClInclude Include="Wizard.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader.vs">
@@ -92,6 +104,12 @@
       <Filter>File di origine</Filter>
     </None>
     <None Include="shader_light.vs">
+      <Filter>File di origine</Filter>
+    </None>
+    <None Include="model3D_shader.vs">
+      <Filter>File di origine</Filter>
+    </None>
+    <None Include="model3D_shader.fs">
       <Filter>File di origine</Filter>
     </None>
   </ItemGroup>

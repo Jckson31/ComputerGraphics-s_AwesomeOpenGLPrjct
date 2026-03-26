@@ -44,23 +44,46 @@ Customer::Customer(int tIdx, int sIdx, glm::vec2 startPos, glm::vec2 target, int
     float hg = (rand() % 100) / 100.0f;
     float hb = (rand() % 100) / 100.0f;
     hairColor = glm::vec3(hr, hg, hb);
+
+    isEating = false;
+    eatingTimer = 0.0f;
+
+    isLeaving = false;
+    hasLeft = false;
 }
 
 void Customer::update(float deltaTime, bool isBardPlaying) {
-    if (isWalking) {
+    if (isEating) {
+        eatingTimer += deltaTime;
+        if (eatingTimer > 3.0f) { // Rimane seduto a mangiare per 3 secondi!
+            isEating = false;
+            leave(); // Finito il tempo, si alza e se ne va
+        }
+    }
+    else if (isWalking) {
         float speed = 120.0f * deltaTime;
         glm::vec2 nextTarget;
 
         if (walkState == 0) nextTarget = glm::vec2(400.0f, 30.0f);  // Vai alla porta della taverna  
         else if (walkState == 1) nextTarget = glm::vec2(safeX, 30.0f); //vai verso il corridoio sicuro (stesso Y della porta)
         else if (walkState == 2) nextTarget = glm::vec2(safeX, targetPos.y); //sali lungo il corridoio vers la Y giusta
-        else nextTarget = targetPos;  //arriva alla sedia 
+        else if (walkState == 3) nextTarget = targetPos;  //arriva alla sedia 
+
+        else if (walkState == 4) nextTarget = glm::vec2(safeX, targetPos.y); // Torna al corridoio sicuro
+        else if (walkState == 5) nextTarget = glm::vec2(safeX, 30.0f);       // Scendi verso la porta
+        else if (walkState == 6) nextTarget = glm::vec2(400.0f, -20.0f);     // Esci dallo schermo
 
         float distance = glm::distance(pos, nextTarget);  //quanti pixel mancano al cliente per arrivare alla tappa
         if (distance <= speed) {  //se la distanza è minore della velocità , il cliente è arrivato a destinazione
             pos = nextTarget;
             walkState++;
-            if (walkState > 3) isWalking = false;  //se è arrivato alla sedia, smette di camminare
+
+            if (walkState == 4 && !isLeaving)
+                isWalking = false;  //"si alza" e va verso il corridoio sicuro
+            else if (walkState > 6) {  // è uscito dallo schermo, possiamo eliminarlo
+                isWalking = false;
+                hasLeft = true; // Ora il Main può cancellarlo!
+            }
         }
         else {
             glm::vec2 direction = glm::normalize(nextTarget - pos);  //calcola la direzione 
@@ -68,8 +91,8 @@ void Customer::update(float deltaTime, bool isBardPlaying) {
         }
 
         // --- LOGICA DIREZIONE ---
-        float dx = targetPos.x - pos.x;
-        float dy = targetPos.y - pos.y;
+        float dx = nextTarget.x - pos.x;
+        float dy = nextTarget.y - pos.y;
 
         if (std::abs(dx) > std::abs(dy)) {
             if (dx < 0) currentDir = 2; // Sinistra
@@ -111,3 +134,21 @@ int Customer::getCurrentFrame() const { return currentFrame; }
 int Customer::getCurrentDir() const { return currentDir; }
 glm::vec3 Customer::getClothesColor() const { return clothesColor; }
 glm::vec3 Customer::getHairColor() const { return hairColor; }
+
+void Customer::servedFood() {
+    isEating = true;
+    waiting = false;     // Non aspetta più l'ordinazione
+    eatingTimer = 0.0f;  // Fa partire il timer del pasto a zero
+}
+
+bool Customer::getIsEating() const { return isEating; }
+
+void Customer::leave() {
+    isLeaving = true;
+    isWalking = true;
+    walkState = 4;   // Iniziamo la sequenza di uscita dal corridoio
+    waiting = false; // Smette di aspettare il cibo (evita che tu possa servirlo mentre scappa)
+}
+
+bool Customer::getIsLeaving() const { return isLeaving; }
+bool Customer::getHasLeft() const { return hasLeft; }
