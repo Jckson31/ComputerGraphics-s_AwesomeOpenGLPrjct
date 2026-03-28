@@ -177,6 +177,33 @@
     <Image Include="resources\textures\customer1.png">
       <Filter>File di risorse</Filter>
     </Image>
+    <Image Include="resources\textures\floor2.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\trashcan.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\wall.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\candle.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\carpet.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\cheese.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\dirt.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\fish.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="resources\textures\meat2.png">
+      <Filter>File di risorse</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="OpenGLApp.rc">

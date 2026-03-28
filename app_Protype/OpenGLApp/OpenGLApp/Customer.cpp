@@ -47,6 +47,7 @@ Customer::Customer(int tIdx, int sIdx, glm::vec2 startPos, glm::vec2 target, int
 
     isEating = false;
     eatingTimer = 0.0f;
+    doneEating = false;
 
     isLeaving = false;
     hasLeft = false;
@@ -57,6 +58,7 @@ void Customer::update(float deltaTime, bool isBardPlaying) {
         eatingTimer += deltaTime;
         if (eatingTimer > 3.0f) { // Rimane seduto a mangiare per 3 secondi!
             isEating = false;
+            doneEating = true;
             leave(); // Finito il tempo, si alza e se ne va
         }
     }
@@ -152,3 +154,4 @@ void Customer::leave() {
 
 bool Customer::getIsLeaving() const { return isLeaving; }
 bool Customer::getHasLeft() const { return hasLeft; }
+

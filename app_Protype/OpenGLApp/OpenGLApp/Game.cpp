@@ -49,7 +49,7 @@ void Game::Init() {
     wizard = new Wizard(glm::vec2(40.0f, 60.0f));
 
     counter = new TavernObject(glm::vec2(350.0f, 450.0f), glm::vec2(600.0f, 100.0f), glm::vec3(0.6f, 0.3f, 0.1f));
-    trashCan = new TavernObject(glm::vec2(750.0f, 500.0f), glm::vec2(30.0f, 40.0f), glm::vec3(0.3f, 0.3f, 0.3f));
+    trashCan = new TavernObject(glm::vec2(740.0f, 470.0f), glm::vec2(40.0f, 50.0f), glm::vec3(0.3f, 0.3f, 0.3f));
 
     tables.clear();
 
@@ -173,6 +173,18 @@ void Game::Update(float dt) {
     // 5. Aggiornamento Clienti
     for (int i = 0; i < customers.size(); ) {
         customers[i].update(dt, bard->isPlaying());
+
+        if (customers[i].doneEating) {
+            customers[i].doneEating = false; // Spegni il segnale per non generare sporco infinito
+
+            // 40% di probabilità di sporcare il pavimento
+            if (rand() % 100 < 40) {
+                dirts.push_back(Dirt(customers[i].getPos()));
+                std::cout << "Un cliente ha finito di mangiare e ha lasciato il tavolo sporco!" << std::endl;
+                PrintDashboard();
+            }
+        }
+
 
         if (customers[i].isAngry && !customers[i].getIsLeaving()) {
             angryCustomers++;
@@ -302,11 +314,6 @@ void Game::ProcessInput(GLFWwindow* window, float dt) {
                             angryCustomers = 0;
                             if (currentSpawnRate > 2.0f) currentSpawnRate -= 2.0f;
                             if (currentMaxPatience > 15.0f) currentMaxPatience -= 5.0f;
-                        }
-
-                        if (rand() % 100 < 40) {
-                            dirts.push_back(Dirt(custPos));
-                            PrintDashboard();
                         }
 
                         player->setHeldItem(-1);
@@ -450,6 +457,28 @@ void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, 
     );
 
     spriteShader.use();
+    spriteShader.setVec2("texScale", 1.0f, 1.0f);
+    spriteShader.setVec2("texOffset", 0.0f, 0.0f);
+    spriteShader.setBool("usePaletteSwap", false);
+    spriteShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f));
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texCandle); // La tua texture della candela
+
+    for (int i = 0; i < tables.size(); i++) {
+        glm::mat4 modelCandle = glm::mat4(1.0f);
+        modelCandle = glm::translate(modelCandle, glm::vec3(tables[i].getPos().x, tables[i].getPos().y + 50.0f, (Height - tables[i].getPos().y) + 50.0f));
+        modelCandle = glm::scale(modelCandle, glm::vec3(32.0f, 32.0f, 1.0f));
+        spriteShader.setMat4("model", modelCandle);
+        glBindVertexArray(cubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
+
+
+
+
+
+    spriteShader.use();
     glActiveTexture(GL_TEXTURE0);
 
     // === PAVIMENTO ===
@@ -470,6 +499,27 @@ void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, 
 
     glBindVertexArray(cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    spriteShader.use();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texCarpet);
+    spriteShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f));
+
+    // Il pavimento è seamless, quindi lo facciamo ripetere per evitare che i pixel sembrino giganti
+    spriteShader.setVec2("texScale", 1.0f, 1.0f);
+    spriteShader.setVec2("texOffset", 0.0f, 0.0f);
+    spriteShader.setBool("usePaletteSwap", false);
+
+    glm::mat4 modelCarpet = glm::mat4(1.0f);
+    // Posizioniamo il pavimento a Z=0.0f (sul fondo)
+    modelCarpet = glm::translate(modelCarpet, glm::vec3(400.0f, 100.0, 0.01f));
+    // Lo scaliamo per coprire l'intera larghezza e altezza dello schermo
+    modelCarpet = glm::scale(modelCarpet, glm::vec3(120.0f, 120.0f, 1.0f));
+    spriteShader.setMat4("model", modelCarpet);
+
+    glBindVertexArray(cubeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
 
     // === MURO ===
     glBindTexture(GL_TEXTURE_2D, texWall);
@@ -585,8 +635,9 @@ void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, 
 
     // ===== DISEGNA LO SPORCO =====
     for (int i = 0; i < dirts.size(); i++) {
-        // Colore verdastro/marrone scuro per lo sporco
-        spriteShader.setVec3("noteColor", glm::vec3(0.3f, 0.4f, 0.1f));
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texDirt);
+        spriteShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f));
         glm::mat4 modelDirt = glm::mat4(1.0f);
 
         // Lo mettiamo a Z=0.05f (sotto i tavoli ma sopra il pavimento)
@@ -732,7 +783,7 @@ void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, 
             spriteShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f));
             glm::mat4 modelOrder = glm::mat4(1.0f);
             modelOrder = glm::translate(modelOrder, glm::vec3(custPos.x, custPos.y + 45.0f, (Height - custPos.y) + 43.0f));
-            modelOrder = glm::scale(modelOrder, glm::vec3(25.0f, 25.0f, 1.0f));
+            modelOrder = glm::scale(modelOrder, glm::vec3(32.0f, 32.0f, 1.0f));
             spriteShader.setMat4("model", modelOrder);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
@@ -746,10 +797,10 @@ void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, 
 
             // Lo posizioniamo ad altezza "tavolo" (custPos.y + 5.0f).
             // La coordinata Z è +34.0f, così siamo sicuri che venga disegnato SOPRA al cliente che ha +31.0f
-            modelFood = glm::translate(modelFood, glm::vec3(custPos.x, custPos.y + 7.0f, (Height - custPos.y) + 46.0f));
+            modelFood = glm::translate(modelFood, glm::vec3(custPos.x, custPos.y + 5.0f, (Height - custPos.y) + 46.0f));
 
             // Lo facciamo un pochino più piccolo rispetto a quando è nel fumetto (20.0f invece di 25.0f)
-            modelFood = glm::scale(modelFood, glm::vec3(20.0f, 20.0f, 1.0f));
+            modelFood = glm::scale(modelFood, glm::vec3(30.0f, 30.0f, 1.0f));
 
             spriteShader.setMat4("model", modelFood);
             glDrawArrays(GL_TRIANGLES, 0, 36);

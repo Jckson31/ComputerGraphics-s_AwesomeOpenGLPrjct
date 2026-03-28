@@ -28,6 +28,7 @@ public:
     int desiredFood;
     bool waiting;
     bool isAngry;
+    bool doneEating;       // Vero quando ha finito di mangiare e deve alzarsi
 
 
     // Costruttore
@@ -52,4 +53,5 @@ public:
     void leave();
     bool getIsLeaving() const;
     bool getHasLeft() const;
+
 };

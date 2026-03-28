@@ -311,17 +311,26 @@ int main()
 
 
     unsigned int texBeer = loadTexture("resources/textures/beer.png");
-    unsigned int texMeat = loadTexture("resources/textures/meat.png");
-    unsigned int texBread = loadTexture("resources/textures/bread.png");
-    unsigned int texSoup = loadTexture("resources/textures/soup.png");
+    unsigned int texMeat = loadTexture("resources/textures/meat2.png");
+    unsigned int texCheese = loadTexture("resources/textures/cheese.png");
+    unsigned int texFish = loadTexture("resources/textures/fish.png");
 
 
     unsigned int foodTextures[4];
     foodTextures[0] = texBeer;   // 0 = Birra
     foodTextures[1] = texMeat;   // 1 = Carne
-    foodTextures[2] = texSoup; // 2 = Zuppa (tappabuchi temporaneo)
-    foodTextures[3] = texBread;  // 3 = Pane (tappabuchi temporaneo)
+    foodTextures[2] = texCheese; // 2 = Zuppa (tappabuchi temporaneo)
+    foodTextures[3] = texFish;  // 3 = Pane (tappabuchi temporaneo)
 
+    unsigned int texCarpet = loadTexture("resources/textures/carpet.png");
+    unsigned int texCandle = loadTexture("resources/textures/candle.png");
+
+
+    Tavern.texCarpet = texCarpet;
+    Tavern.texCandle = texCandle;
+
+    unsigned int texDirt = loadTexture("resources/textures/dirt.png");
+    Tavern.texDirt = texDirt;
 
 
     // --- CARICAMENTO ANIMAZIONI GIOCATORE ---
@@ -443,4 +452,5 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
+
 

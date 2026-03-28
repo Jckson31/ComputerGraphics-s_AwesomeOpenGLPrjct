@@ -81,11 +81,15 @@ public:
     unsigned int texWall;
     unsigned int texTable;
     unsigned int texCounter;
+    unsigned int texCarpet;
+    unsigned int texCandle;
 
     // Array di texture
     unsigned int foodTextures[4];
     unsigned int playerTextures[4];
     unsigned int custTextures[4];
+
+    unsigned int texDirt;
 
     // --- METODI ---
     // Costruttore e distruttore

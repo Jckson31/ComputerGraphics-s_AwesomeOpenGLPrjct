@@ -22,7 +22,7 @@ Bard::Bard(glm::vec2 startSize) {
 void Bard::update(float deltaTime, bool isTavernBusy) {
     // STATO 1: STA ENTRANDO
     if (walkingIn) {
-        glm::vec2 stagePos = glm::vec2(400.0f, 150.0f);
+        glm::vec2 stagePos = glm::vec2(400.0f, 110.0f);
         float dist = glm::distance(pos, stagePos);
         if (dist < 80.0f * deltaTime) {  //quando arriva, si ferma e aspetta l'interazione dell'oste
             pos = stagePos;

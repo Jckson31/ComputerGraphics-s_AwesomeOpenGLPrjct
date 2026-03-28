@@ -19,7 +19,7 @@ void Wizard::update(float deltaTime, bool isTavernBusy) {
 	//STATO 1
 	if (walkingIn) {
 		// STA ENTRANDO
-		glm::vec2 stagePos = glm::vec2(400.0f, 150.0f);
+		glm::vec2 stagePos = glm::vec2(400.0f, 110.0f);
 		float dist = glm::distance(pos, stagePos);
 		if (dist < 80.0f * deltaTime) { // arriva, si ferma e aspetta
 			pos = stagePos;
