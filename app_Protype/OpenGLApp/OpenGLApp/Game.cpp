@@ -83,13 +83,46 @@ void Game::Update(float dt) {
 
     // 1. Logica Sporco
     randomDirtTimer += dt;
-    if (randomDirtTimer > 8.0f) {
+    if (randomDirtTimer > 10.0f) {
         randomDirtTimer = 0.0f;
-        float randomX = 50.0f + (rand() % 700);
-        float randomY = 50.0f + (rand() % 400);
-        dirts.push_back(Dirt(glm::vec2(randomX, randomY)));
-        std::cout << "E' apparsa una macchia sul pavimento..." << std::endl;
-        PrintDashboard();
+        glm::vec2 dirtPos;
+        bool positionIsValid = false;
+        int attempts = 0;
+
+        // Continua a cercare un posto finché non ne trova uno libero 
+        // (max 15 tentativi per evitare che il gioco si blocchi in un loop infinito)
+        while (!positionIsValid && attempts < 15) {
+            float randomX = 50.0f + (rand() % 700);
+            float randomY = 50.0f + (rand() % 400); // Fino a 400 così non va dietro al bancone
+            dirtPos = glm::vec2(randomX, randomY);
+            glm::vec2 dirtSize = glm::vec2(40.0f, 40.0f); // Scatola di sicurezza della macchia
+
+            positionIsValid = true; // Presumiamo sia valido, poi cerchiamo collisioni
+
+            // A. Controlla se la macchia finisce sul bancone
+            if (CheckCollision(dirtPos, dirtSize, counter->getPos(), glm::vec2(600.0f, 100.0f))) {
+                positionIsValid = false;
+            }
+
+            // B. Controlla se la macchia finisce sotto un tavolo
+            for (int i = 0; i < tables.size(); i++) {
+                // Il tavolo grande ha una scatola più grande
+                glm::vec2 tSize = (i == tables.size() - 1) ? glm::vec2(160.0f, 80.0f) : glm::vec2(130.0f, 80.0f);
+
+                if (CheckCollision(dirtPos, dirtSize, tables[i].getPos(), tSize)) {
+                    positionIsValid = false;
+                    break; // Inutile controllare gli altri tavoli, questo tentativo è fallito
+                }
+            }
+            attempts++;
+        }
+
+        // Se dopo i tentativi ha trovato un posto libero, genera lo sporco!
+        if (positionIsValid) {
+            dirts.push_back(Dirt(dirtPos));
+            std::cout << "E' apparsa una macchia sul pavimento..." << std::endl;
+            PrintDashboard();
+        }
     }
 
     // 2. Aggiornamento Player
@@ -170,6 +203,8 @@ void Game::ProcessInput(GLFWwindow* window, float dt) {
     glm::vec2 playerPos = player->getPos();
     glm::vec2 playerSize = player->getSize();
 
+    float spessoreMuro = 70.0f;
+
     glm::vec2 nextPosX = playerPos; nextPosX.x += moveDir.x;
     glm::vec2 nextPosY = playerPos; nextPosY.y += moveDir.y;
 
@@ -179,23 +214,25 @@ void Game::ProcessInput(GLFWwindow* window, float dt) {
     if (nextPosX.x - halfWidth < 0.0f) nextPosX.x = halfWidth;
     if (nextPosX.x + halfWidth > Width) nextPosX.x = Width - halfWidth;
     if (nextPosY.y - halfHeight < 0.0f) nextPosY.y = halfHeight;
-    if (nextPosY.y + halfHeight > Height) nextPosY.y = Height - halfHeight;
+    if (nextPosY.y + halfHeight > (Height - spessoreMuro)) nextPosY.y = (Height - spessoreMuro) - halfHeight;
 
     // Collisioni Asse X
     bool colX = false;
-    glm::vec2 counterCollPos = glm::vec2(350.0f, counter->getPos().y + 20.0f);
-    glm::vec2 counterCollSize = glm::vec2(600.0f, 25.0f);
+    glm::vec2 counterCollPos = glm::vec2(350.0f, counter->getPos().y + 10.0f); // Leggermente abbassato
+    glm::vec2 counterCollSize = glm::vec2(600.0f, 40.0f);
     if (CheckCollision(nextPosX, playerSize, counterCollPos, counterCollSize)) colX = true;
     if (CheckCollision(nextPosX, playerSize, trashCan->getPos(), trashCan->getSize())) colX = true;
 
-    glm::vec2 tableCollSize = glm::vec2(85.0f, 30.0f);
-    glm::vec2 bigTableCollSize = glm::vec2(130.0f, 35.0f);
+    // SCATOLE PIU' LARGHE, MA PIU' SOTTILI IN ALTEZZA
+    glm::vec2 tableCollSize = glm::vec2(120.0f, 30.0f);
+    glm::vec2 bigTableCollSize = glm::vec2(160.0f, 40.0f);
 
     for (int i = 0; i < tables.size() - 1; i++) {
-        glm::vec2 tableCollPos = tables[i].getPos() + glm::vec2(0.0f, 15.0f);
+        // Offset Y ridotto a +5.0f per far avvicinare l'oste di più dal davanti
+        glm::vec2 tableCollPos = tables[i].getPos() + glm::vec2(0.0f, 5.0f);
         if (CheckCollision(nextPosX, playerSize, tableCollPos, tableCollSize)) colX = true;
     }
-    glm::vec2 bigTableCollPos = tables[tables.size() - 1].getPos() + glm::vec2(0.0f, 15.0f);
+    glm::vec2 bigTableCollPos = tables[tables.size() - 1].getPos() + glm::vec2(0.0f, 5.0f);
     if (CheckCollision(nextPosX, playerSize, bigTableCollPos, bigTableCollSize)) colX = true;
 
     if (!colX) playerPos.x = nextPosX.x;
@@ -206,7 +243,7 @@ void Game::ProcessInput(GLFWwindow* window, float dt) {
     if (CheckCollision(nextPosY, playerSize, trashCan->getPos(), trashCan->getSize())) colY = true;
 
     for (int i = 0; i < tables.size() - 1; i++) {
-        glm::vec2 tableCollPos = tables[i].getPos() + glm::vec2(0.0f, 15.0f);
+        glm::vec2 tableCollPos = tables[i].getPos() + glm::vec2(0.0f, 5.0f);
         if (CheckCollision(nextPosY, playerSize, tableCollPos, tableCollSize)) colY = true;
     }
     if (CheckCollision(nextPosY, playerSize, bigTableCollPos, bigTableCollSize)) colY = true;
@@ -365,6 +402,9 @@ void Game::drawTavernModel(Shader& shader, Model& model, float screenX, float sc
     model.Draw(shader);
 }
 
+
+// ==== RENDER ====
+
 void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, Model& counterModel) {
 
     // ---- MODELLI 3D (BANCONI E TAVOLI) ---- 
@@ -372,25 +412,32 @@ void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, 
     glEnable(GL_DEPTH_TEST);
 
     // --- BANCONE ---
-    modelShader.setBool("hasDiffuseTexture", false);
-    modelShader.setVec3("flatColor", glm::vec3(0.55f, 0.28f, 0.08f));
+    modelShader.setBool("hasDiffuseTexture", true);
+    //modelShader.setVec3("flatColor", glm::vec3(0.55f, 0.28f, 0.08f));
+    glActiveTexture(GL_TEXTURE0); // Usiamo lo slot 0 per semplicità
+    glBindTexture(GL_TEXTURE_2D, texCounter);
     drawTavernModel(
         modelShader, counterModel,
         counter->getPos().x, counter->getPos().y,
-        120.0f, 50.0f, 50.0f,   // Partiamo da una scala uniforme molto più piccola
-        -20.0f, 180.0f                 // L'angolo per vederne il fronte (2.5D),
+        120.0f, 60.0f, 60.0f,   // Partiamo da una scala uniforme molto più piccola
+        -30.0f, 180.0f                 // L'angolo per vederne il fronte (2.5D),
     );
 
     // --- TUTTI I TAVOLI ---
     int Ntables = tables.size();
 
-    modelShader.setBool("hasDiffuseTexture", false);
-    modelShader.setVec3("flatColor", glm::vec3(0.40f, 0.20f, 0.08f));
+    modelShader.setBool("hasDiffuseTexture", true);
+    //modelShader.setVec3("flatColor", glm::vec3(0.40f, 0.20f, 0.08f));
+    glActiveTexture(GL_TEXTURE0); // Usiamo lo slot 0 per semplicità
+    glBindTexture(GL_TEXTURE_2D, texTable);
+    modelShader.setInt("texture_diffuse1", 0);
+
+
     for (int i = 0; i < Ntables - 1; i++) {
         drawTavernModel(
             modelShader, tableModel,
             tables[i].getPos().x, tables[i].getPos().y,
-            50.0f, 50.0f, 50.0f,   // Scala di 35 per i tavoli (prima usavi 160!)
+            50.0f, 55.0f, 50.0f,   // Scala di 35 per i tavoli (prima usavi 160!)
             35.0f, 0.0f                // L'angolo per vederne le gambe (2.5D)
         );
     }
@@ -405,7 +452,41 @@ void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, 
     spriteShader.use();
     glActiveTexture(GL_TEXTURE0);
 
-    // --- OGGETTI 2D (Player, Clienti, Bardo, Mago, Cestino) ---
+    // === PAVIMENTO ===
+    glBindTexture(GL_TEXTURE_2D, texFloor);
+    spriteShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f));
+
+    // Il pavimento è seamless, quindi lo facciamo ripetere per evitare che i pixel sembrino giganti
+    spriteShader.setVec2("texScale", 4.0f, 3.0f);
+    spriteShader.setVec2("texOffset", 0.0f, 0.0f);
+    spriteShader.setBool("usePaletteSwap", false);
+
+    glm::mat4 modelFloor = glm::mat4(1.0f);
+    // Posizioniamo il pavimento a Z=0.0f (sul fondo)
+    modelFloor = glm::translate(modelFloor, glm::vec3(Width / 2.0f, Height / 2.0f, 0.0f));
+    // Lo scaliamo per coprire l'intera larghezza e altezza dello schermo
+    modelFloor = glm::scale(modelFloor, glm::vec3(Width, Height, 1.0f));
+    spriteShader.setMat4("model", modelFloor);
+
+    glBindVertexArray(cubeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    // === MURO ===
+    glBindTexture(GL_TEXTURE_2D, texWall);
+    // Il muro non si ripete in altezza, ma un pochino in larghezza
+    spriteShader.setVec2("texScale", 2.0f, 1.0f);
+
+    glm::mat4 modelWall = glm::mat4(1.0f);
+    // Posizioniamo il muro in alto (Width/2, Height - 50.0f) e leggermente davanti al pavimento (Z=0.01f)
+    modelWall = glm::translate(modelWall, glm::vec3(Width / 2.0f, Height - 50.0f, 0.01f));
+    // Creiamo una fascia alta 100 pixel per tutta la larghezza dello schermo
+    modelWall = glm::scale(modelWall, glm::vec3(Width, 100.0f, 1.0f));
+    spriteShader.setMat4("model", modelWall);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    // Resettiamo la scala della texture a (1.0f, 1.0f) per gli oggetti successivi (cestino, oste, ecc.)
+    spriteShader.setVec2("texScale", 1.0f, 1.0f);
+
     // ===== CESTINO =====
     spriteShader.setVec2("texScale", 1.0f, 1.0f);
     spriteShader.setVec2("texOffset", 0.0f, 0.0f);
@@ -424,12 +505,12 @@ void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, 
     // ===== GIOCATORE (OSTE) =====
     spriteShader.use();
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, playerTextures[player->getCurrentDir()]);
+    glBindTexture(GL_TEXTURE_2D, playerTextures[player->getCurrentDir()]);  //usa la texture in base alla direzione del player
     spriteShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
-    spriteShader.setVec2("texScale", 0.5f, 1.0f);
-    float xOffset = player->getCurrentFrame() * 0.5f;
-    spriteShader.setVec2("texOffset", xOffset, 0.0f);
+    spriteShader.setVec2("texScale", 0.5f, 1.0f);   // Ogni animazione ha 2 frame, quindi scalare la texture orizzontalmente di 0.5 per mostrare solo un frame alla volta
+    float xOffset = player->getCurrentFrame() * 0.5f; // Calcola l'offset orizzontale in base al frame corrente (0 o 1)
+    spriteShader.setVec2("texOffset", xOffset, 0.0f); // Applica l'offset alla shader per mostrare il frame corretto dell'animazione 
 
     // RIDIMENSIONAMENTO GEOMETRICO DINAMICO
     int dir = player->getCurrentDir();
@@ -633,7 +714,7 @@ void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, 
         }
 
         glm::mat4 modelCust = glm::mat4(1.0f);
-        modelCust = glm::translate(modelCust, glm::vec3(custPos.x, custPos.y, (Height - custPos.y) + 35.0f));
+        modelCust = glm::translate(modelCust, glm::vec3(custPos.x, custPos.y, (Height - custPos.y) + 43.0f));
         modelCust = glm::scale(modelCust, glm::vec3(drawW, drawH, 1.0f));
         spriteShader.setMat4("model", modelCust);
         glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -650,7 +731,7 @@ void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, 
 
             spriteShader.setVec3("noteColor", glm::vec3(1.0f, 1.0f, 1.0f));
             glm::mat4 modelOrder = glm::mat4(1.0f);
-            modelOrder = glm::translate(modelOrder, glm::vec3(custPos.x, custPos.y + 45.0f, (Height - custPos.y) + 35.0f));
+            modelOrder = glm::translate(modelOrder, glm::vec3(custPos.x, custPos.y + 45.0f, (Height - custPos.y) + 43.0f));
             modelOrder = glm::scale(modelOrder, glm::vec3(25.0f, 25.0f, 1.0f));
             spriteShader.setMat4("model", modelOrder);
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -665,7 +746,7 @@ void Game::Render(Shader& spriteShader, Shader& modelShader, Model& tableModel, 
 
             // Lo posizioniamo ad altezza "tavolo" (custPos.y + 5.0f).
             // La coordinata Z è +34.0f, così siamo sicuri che venga disegnato SOPRA al cliente che ha +31.0f
-            modelFood = glm::translate(modelFood, glm::vec3(custPos.x, custPos.y + 7.0f, (Height - custPos.y) + 37.0f));
+            modelFood = glm::translate(modelFood, glm::vec3(custPos.x, custPos.y + 7.0f, (Height - custPos.y) + 46.0f));
 
             // Lo facciamo un pochino più piccolo rispetto a quando è nel fumetto (20.0f invece di 25.0f)
             modelFood = glm::scale(modelFood, glm::vec3(20.0f, 20.0f, 1.0f));

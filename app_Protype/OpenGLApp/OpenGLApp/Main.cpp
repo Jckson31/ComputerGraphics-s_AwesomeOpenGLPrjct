@@ -159,8 +159,8 @@ int main()
     Shader modelShader("model3D_shader.vs", "model3D_shader.fs");
 
 
-    Model tableModel("resources/models/table/table.obj");
-    Model counterModel("resources/models/counter/counter.obj");
+    Model tableModel("resources/models/table2/table2.obj");
+    Model counterModel("resources/models/counter2/counter2.obj");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -298,7 +298,17 @@ int main()
 
     Tavern.Init();
 
-    unsigned int texFloor = loadTexture("resources/textures/wood.jpeg");
+    unsigned int texFloor = loadTexture("resources/textures/floor2.png");
+    unsigned int texWall = loadTexture("resources/textures/wall.png");
+
+    unsigned int texTable = loadTexture("resources/models/table2/table_tex.png");
+    unsigned int texCounter = loadTexture("resources/models/counter2/counter_tex.png");
+
+    Tavern.texFloor = texFloor;
+    Tavern.texWall = texWall;
+    Tavern.texTable = texTable;
+    Tavern.texCustSeated = texCounter;
+
 
     unsigned int texBeer = loadTexture("resources/textures/beer.png");
     unsigned int texMeat = loadTexture("resources/textures/meat.png");
@@ -397,6 +407,8 @@ int main()
         modelShader.setVec3("lightDir", TAVERN_LIGHT_DIR);
         modelShader.setVec3("lightColor", TAVERN_LIGHT_COLOR);
         modelShader.setFloat("ambientStrength", TAVERN_AMBIENT);
+
+        modelShader.setBool("hasDiffuseTexture", true);
 
         Tavern.Render(ourShader, modelShader, tableModel, counterModel);
 

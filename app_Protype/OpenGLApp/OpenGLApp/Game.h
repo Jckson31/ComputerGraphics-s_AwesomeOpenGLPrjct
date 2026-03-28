@@ -77,6 +77,11 @@ public:
     unsigned int texWizUp, texWizDown;
     unsigned int texBardUp, texBardDown, texBardPlay;
 
+    unsigned int texFloor;
+    unsigned int texWall;
+    unsigned int texTable;
+    unsigned int texCounter;
+
     // Array di texture
     unsigned int foodTextures[4];
     unsigned int playerTextures[4];
